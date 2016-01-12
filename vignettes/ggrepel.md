@@ -1,7 +1,7 @@
 ---
 title: "ggrepel Usage Examples"
 author: "Kamil Slowikowski"
-date: "2016-01-09"
+date: "2016-01-12"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{ggrepel Usage Examples}
@@ -26,7 +26,7 @@ ggplot(mtcars) +
   theme_classic(base_size = 16)
 ```
 
-<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text-1.png" title="" alt="" width="700" />
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text-1.png" title="plot of chunk geom_text" alt="plot of chunk geom_text" width="700" />
 
 ## Algorithm
 
@@ -60,7 +60,7 @@ ggplot(mtcars) +
   theme_classic(base_size = 16)
 ```
 
-<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text_repel-1.png" title="" alt="" width="700" />
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text_repel-1.png" title="plot of chunk geom_text_repel" alt="plot of chunk geom_text_repel" width="700" />
 
 #### Options
 
@@ -80,10 +80,9 @@ However, the following parameters are not supported:
 
 - `segment.color` is the line segment color
 - `box.padding` is the padding surrounding the text bounding box
+- `point.padding` is the padding around the labeled point
 - `force` is the force of repulsion between overlapping text labels
 - `max.iter` is the maximum number of iterations to attempt to resolve overlaps
-- `expand` the text will be arranged in the expanded plot area if TRUE, or else
-  the text will be arranged within the range of the data points
 
 
 ```r
@@ -100,15 +99,15 @@ ggplot(mtcars) +
     fontface = 'bold',
     segment.color = 'red',
     box.padding = unit(0.3, 'lines'),
+    point.padding = unit(0.4, 'lines'),
     force = 2,
-    max.iter = 1e4,
-    expand = TRUE
+    max.iter = 1e4
   ) +
   scale_color_discrete(name = 'cyl') +
   theme_classic(base_size = 16)
 ```
 
-<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text_repel_options-1.png" title="" alt="" width="700" />
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text_repel_options-1.png" title="plot of chunk geom_text_repel_options" alt="plot of chunk geom_text_repel_options" width="700" />
 
 ### geom_label_repel
 
@@ -127,7 +126,64 @@ ggplot(mtcars) +
   theme_classic(base_size = 16)
 ```
 
-<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_label_repel-1.png" title="" alt="" width="700" />
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_label_repel-1.png" title="plot of chunk geom_label_repel" alt="plot of chunk geom_label_repel" width="700" />
+
+### Volcano plot
+
+
+```r
+# Read Stephen Turner's data
+genes <- read.table("genes.txt.bz2", header = TRUE)
+genes$Significant <- ifelse(genes$padj < 0.05, "FDR < 0.05", "Not Sig")
+
+ggplot(genes, aes(x = log2FoldChange, y = -log10(pvalue))) +
+  geom_point(aes(color = Significant)) +
+  scale_color_manual(values = c("red", "grey")) +
+  theme_bw(base_size = 16) +
+  geom_text_repel(
+    data = subset(genes, padj < 0.05),
+    aes(label = Gene),
+    size = 5,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines")
+  )
+```
+
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/volcano-1.png" title="plot of chunk volcano" alt="plot of chunk volcano" width="700" />
+
+### Animation
+
+
+```r
+# This chunk of code will take a minute or two to run.
+library(ggrepel)
+library(animation)
+
+plot_frame <- function(n) {
+  set.seed(42)
+  p <- ggplot(mtcars) +
+    geom_point(aes(wt, mpg), color = 'red') +
+    geom_text_repel(
+      aes(wt, mpg, label = rownames(mtcars)),
+      size = 5, force = 3, max.iter = n
+    ) +
+    theme_classic(base_size = 16)
+  print(p)
+}
+
+saveGIF(
+  lapply(c(seq(0, 2000, 25)), function(i) {
+    plot_frame(i)
+  }),
+  interval = 0.05,
+  ani.width = 800,
+  ani.heigth = 600,
+  movie.name = 'animated.gif'
+)
+```
+
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/animated.gif" title="animation"
+  alt="animation of geom_repel_text" width="700"/>
 
 ## R Session Info
 
@@ -142,20 +198,19 @@ sessionInfo()
 ## Running under: OS X 10.10.5 (Yosemite)
 ## 
 ## locale:
-## [1] C/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ggrepel_0.3   ggplot2_2.0.0 knitr_1.12   
+## [1] ggrepel_0.4   ggplot2_2.0.0 knitr_1.12   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.2      codetools_0.2-14 digest_0.6.9     plyr_1.8.3      
-##  [5] grid_3.2.3       gtable_0.1.2     formatR_1.2.1    magrittr_1.5    
-##  [9] evaluate_0.8     scales_0.3.0     stringi_1.0-1    rmarkdown_0.9.2 
-## [13] labeling_0.3     tools_3.2.3      stringr_1.0.0    munsell_0.4.2   
-## [17] yaml_2.1.13      colorspace_1.2-6 htmltools_0.3
+##  [1] Rcpp_0.12.3      codetools_0.2-14 digest_0.6.9     grid_3.2.3      
+##  [5] plyr_1.8.3       gtable_0.1.2     formatR_1.2.1    magrittr_1.5    
+##  [9] evaluate_0.8     scales_0.3.0     stringi_1.0-1    labeling_0.3    
+## [13] tools_3.2.3      stringr_1.0.0    munsell_0.4.2    colorspace_1.2-6
 ```
 
 [geom_text]: http://docs.ggplot2.org/current/geom_text.html

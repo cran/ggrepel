@@ -91,10 +91,9 @@ However, the following parameters are not supported:
 
 - `segment.color` is the line segment color
 - `box.padding` is the padding surrounding the text bounding box
+- `point.padding` is the padding around the labeled point
 - `force` is the force of repulsion between overlapping text labels
 - `max.iter` is the maximum number of iterations to attempt to resolve overlaps
-- `expand` the text will be arranged in the expanded plot area if TRUE, or else
-  the text will be arranged within the range of the data points
 
 ```{r geom_text_repel_options, echo=TRUE}
 set.seed(42)
@@ -110,9 +109,9 @@ ggplot(mtcars) +
     fontface = 'bold',
     segment.color = 'red',
     box.padding = unit(0.3, 'lines'),
+    point.padding = unit(0.4, 'lines'),
     force = 2,
-    max.iter = 1e4,
-    expand = TRUE
+    max.iter = 1e4
   ) +
   scale_color_discrete(name = 'cyl') +
   theme_classic(base_size = 16)
@@ -133,6 +132,59 @@ ggplot(mtcars) +
   ) +
   theme_classic(base_size = 16)
 ```
+
+### Volcano plot
+
+```{r volcano, echo=TRUE}
+# Read Stephen Turner's data
+genes <- read.table("genes.txt.bz2", header = TRUE)
+genes$Significant <- ifelse(genes$padj < 0.05, "FDR < 0.05", "Not Sig")
+
+ggplot(genes, aes(x = log2FoldChange, y = -log10(pvalue))) +
+  geom_point(aes(color = Significant)) +
+  scale_color_manual(values = c("red", "grey")) +
+  theme_bw(base_size = 16) +
+  geom_text_repel(
+    data = subset(genes, padj < 0.05),
+    aes(label = Gene),
+    size = 5,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines")
+  )
+```
+
+### Animation
+
+```{r animated, echo=TRUE, eval=FALSE}
+# This chunk of code will take a minute or two to run.
+library(ggrepel)
+library(animation)
+
+plot_frame <- function(n) {
+  set.seed(42)
+  p <- ggplot(mtcars) +
+    geom_point(aes(wt, mpg), color = 'red') +
+    geom_text_repel(
+      aes(wt, mpg, label = rownames(mtcars)),
+      size = 5, force = 3, max.iter = n
+    ) +
+    theme_classic(base_size = 16)
+  print(p)
+}
+
+saveGIF(
+  lapply(c(seq(0, 2000, 25)), function(i) {
+    plot_frame(i)
+  }),
+  interval = 0.05,
+  ani.width = 800,
+  ani.heigth = 600,
+  movie.name = 'animated.gif'
+)
+```
+
+<img src="figures/ggrepel/animated.gif" title="animation"
+  alt="animation of geom_repel_text" width="700"/>
 
 ## R Session Info
 

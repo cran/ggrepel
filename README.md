@@ -1,5 +1,9 @@
 # ggrepel
 
+[![Build Status](https://travis-ci.org/slowkow/ggrepel.svg?branch=master)](https://travis-ci.org/slowkow/ggrepel)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/ggrepel)](http://cran.r-project.org/package=ggrepel)
+[![CRAN_Downloads_Badge](http://cranlogs.r-pkg.org/badges/grand-total/ggrepel?color=brightgreen)](http://cranlogs.r-pkg.org/downloads/total/last-month/ggrepel)
+
 `ggrepel` is an R package that implements functions to repel overlapping text
 labels away from each other in a plot created by [ggplot2].
 
@@ -17,7 +21,22 @@ ggplot(mtcars) +
 
 See the [vignette] for more usage examples.
 
+Also, look at the help pages:
+
+```r
+?geom_text_repel
+?geom_label_repel
+```
+
 ## Installation
+
+Install the latest stable release from CRAN:
+
+```r
+install.packages("ggrepel")
+```
+
+Alternatively, install the latest development version from github:
 
 ```r
 install.packages("devtools")

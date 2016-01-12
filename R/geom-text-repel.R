@@ -23,7 +23,7 @@
 #'
 #' @section Alignment:
 #' The repulsive geoms reposition text labels to avoid overlap, so the
-#' following parameters are not supported:
+#' following parameters are \strong{not supported}:
 #'
 #' \itemize{
 #'   \item \code{hjust}
@@ -64,8 +64,10 @@
 #'     default \code{stat} associated with the layer.
 #'   \item Other arguments passed on to the stat.
 #'   }
-#' @param box.padding Amount of padding around bounding box. Defaults to 0.25
-#'   lines.
+#' @param box.padding Amount of padding around bounding box. Defaults to
+#'   \code{unit(0.25, "lines")}.
+#' @param point.padding Amount of padding around labeled point. Defaults to
+#'   \code{unit(0, "lines")}.
 #' @param segment.color Color of the line segment connecting the data point to
 #'   the text labe. Defaults to \code{#666666}.
 #' @param segment.size Width of segment, in mm.
@@ -73,9 +75,6 @@
 #'   to 1.
 #' @param max.iter Maximum number of iterations to try to resolve overlaps.
 #'   Defaults to 2000.
-#' @param expand If \code{TRUE} (the default), allow text labels to be placed
-#'   in the expanded plot area. Otherwise, limit their positions to the range
-#'   of the data.
 #'
 #' @examples
 #'
@@ -87,7 +86,8 @@
 #' p + geom_label_repel()
 #'
 #' \dontrun{
-#' p + geom_text_repel(family = "Times New Roman")
+#' p + geom_text_repel(family = "Times New Roman",
+#'   box.padding = unit(0.5, "lines"))
 #'
 #' # Add aesthetic mappings
 #' p + geom_text_repel(aes(colour = factor(cyl)))
@@ -115,11 +115,11 @@ geom_text_repel <- function(
   parse = FALSE,
   ...,
   box.padding = unit(0.25, "lines"),
+  point.padding = unit(0, "lines"),
   segment.color = "#666666",
   segment.size = 0.5,
   force = 1,
   max.iter = 2000,
-  expand = TRUE,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -136,11 +136,11 @@ geom_text_repel <- function(
       parse = parse,
       na.rm = na.rm,
       box.padding = box.padding,
+      point.padding = point.padding,
       segment.color = segment.color,
       segment.size = segment.size,
       force = force,
       max.iter = max.iter,
-      expand = expand,
       ...
     )
   )
@@ -164,19 +164,25 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     parse = FALSE,
     na.rm = FALSE,
     box.padding = unit(0.25, "lines"),
+    point.padding = unit(0, "lines"),
     segment.color = "#666666",
     segment.size = 0.5,
     force = 1,
-    max.iter = 2000,
-    expand = TRUE
+    max.iter = 2000
   ) {
     lab <- data$label
     if (parse) {
       lab <- parse(text = lab)
     }
 
+    # Get the x and y limits of the panel area.
+    limits <- data.frame(x = panel_scales$x.range, y = panel_scales$y.range)
+    limits <- coord$transform(limits, panel_scales)
+
+    # Transform the raw data to the panel scales.
     data <- coord$transform(data, panel_scales)
 
+    # The padding around each bounding box.
     pad.x <- convertWidth(box.padding, "npc", valueOnly = TRUE)
     pad.y <- convertHeight(box.padding, "npc", valueOnly = TRUE)
 
@@ -207,7 +213,7 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     # Fudge factor to make each box slightly wider. This is useful when the
     # user adds a legend to the plot, causing all the labels to squeeze
     # together.
-    fudge.width <- abs(max(data$x) - min(data$x)) / 50
+    fudge.width <- abs(max(limits$x) - min(limits$x)) / 80
     boxes <- lapply(boxes, function(b) {
       # fudge.width <- abs(b['x2'] - b['x1']) / 10
       b['x1'] <- b['x1'] - fudge.width
@@ -215,59 +221,25 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
       b
     })
 
-    # By default, fit the text labels in the expanded plot area.
-    expanded.range <- function(xs, amount = 0.05) {
-      xs <- range(xs)
-      d <- abs(xs[2] - xs[1])
-      c(xs[1] - amount * d - pad.x, xs[2] + amount * d + pad.x)
-    }
-
-    if (expand) {
-      xlims <- expanded.range(data$x)
-      ylims <- expanded.range(data$y)
-    } else {
-      xlims <- range(data$x)
-      ylims <- range(data$y)
-    }
-
-    ws <- repel_boxes(
+    # Repel overlapping bounding boxes away from each other.
+    repel <- repel_boxes(
       do.call(rbind, boxes),
-      xlim = xlims,
-      ylim = ylims,
+      xlim = range(limits$x),
+      ylim = range(limits$y),
       force = force * 1e-6,
       maxiter = max.iter
     )
-
-#     cat("data$x", range(data$x), "\n")
-#     cat("ws$x", range(ws$x), "\n")
-#     cat("data$y", range(data$y), "\n")
-#     cat("ws$y", range(ws$y), "\n")
-
-#     grobs <- textGrob(
-#       lab,
-#       ws$x, ws$y, default.units = "native",
-#       rot = data$angle,
-#       gp = gpar(
-#         col = alpha(data$colour, data$alpha),
-#         fontsize = data$size * .pt,
-#         fontfamily = data$family,
-#         fontface = data$fontface,
-#         lineheight = data$lineheight
-#       ),
-#       check.overlap = FALSE
-#     )
-#
-#     grobs
 
     grobs <- lapply(1:nrow(data), function(i) {
       row <- data[i, , drop = FALSE]
       textRepelGrob(
         lab[i],
-        x = unit(ws$x[i], "native"),
-        y = unit(ws$y[i], "native"),
+        x = unit(repel$x[i], "native"),
+        y = unit(repel$y[i], "native"),
         x.orig = unit(data$x[i], "native"),
         y.orig = unit(data$y[i], "native"),
         box.padding = box.padding,
+        point.padding = point.padding,
         text.gp = gpar(
           col = row$colour,
           fontsize = row$size * .pt,
@@ -298,6 +270,7 @@ textRepelGrob <- function(
   default.units = "npc",
   just = "center",
   box.padding = unit(0.25, "lines"),
+  point.padding = unit(0, "lines"),
   name = NULL,
   text.gp = gpar(),
   segment.gp = gpar(),
@@ -319,6 +292,7 @@ textRepelGrob <- function(
     y.orig = y.orig,
     just = just,
     box.padding = box.padding,
+    point.padding = point.padding,
     name = name,
     text.gp = text.gp,
     segment.gp = segment.gp,
@@ -348,24 +322,40 @@ makeContent.textrepelgrob <- function(x) {
   x2 <- convertWidth(x$x + 0.5 * grobWidth(t), "native", TRUE)
   y1 <- convertHeight(x$y - 0.5 * grobHeight(t), "native", TRUE)
   y2 <- convertHeight(x$y + 0.5 * grobHeight(t), "native", TRUE)
-  xo <- convertWidth(x$x.orig, "native", TRUE)
-  yo <- convertHeight(x$y.orig, "native", TRUE)
+
+  orig <- c(
+    convertWidth(x$x.orig, "native", TRUE),
+    convertHeight(x$y.orig, "native", TRUE)
+  )
 
   center <- centroid(c(x1, y1, x2, y2))
 
-  # Get the coordinates of the intersection between the line from the original
-  # data point to the centroid and the rectangle's edges.
-  int <- intersect_line_rectangle(c(xo, yo), center, c(x1, y1, x2, y2))
+  d <- (center - orig)
+  d <- d / euclid(center, orig)
+  orig <- orig + convertWidth(x$point.padding, "native", TRUE) * d
 
-  s <- segmentsGrob(
-    x0 = int[1],
-    y0 = int[2],
-    x1 = x$x.orig,
-    y1 = x$y.orig,
-    default.units = "native",
-    gp = x$segment.gp,
-    name = "segment"
-  )
+  pad.x <- convertWidth(x$box.padding, "native", TRUE) / 2
+  pad.y <- convertHeight(x$box.padding, "native", TRUE) / 2
+  b <- c(x1 - pad.x, y1 - pad.y, x2 + pad.x, y2 + pad.y)
 
-  setChildren(x, gList(s, t))
+  if (!point_within_box(orig, b)) {
+
+    # Get the coordinates of the intersection between the line from the
+    # original data point to the centroid and the rectangle's edges.
+    int <- intersect_line_rectangle(orig, center, b)
+
+    s <- segmentsGrob(
+      x0 = int[1],
+      y0 = int[2],
+      x1 = orig[1],
+      y1 = orig[2],
+      default.units = "native",
+      gp = x$segment.gp,
+      name = "segment"
+    )
+
+    return(setChildren(x, gList(s, t)))
+  }
+
+  return(setChildren(x, gList(t)))
 }

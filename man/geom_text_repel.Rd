@@ -7,15 +7,15 @@
 \usage{
 geom_label_repel(mapping = NULL, data = NULL, stat = "identity",
   parse = FALSE, ..., box.padding = unit(0.25, "lines"),
-  label.padding = unit(0.25, "lines"), label.r = unit(0.15, "lines"),
-  label.size = 0.25, force = 1, max.iter = 2000, expand = TRUE,
-  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE)
+  label.padding = unit(0.25, "lines"), point.padding = unit(0, "lines"),
+  label.r = unit(0.15, "lines"), label.size = 0.25, force = 1,
+  max.iter = 2000, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE)
 
 geom_text_repel(mapping = NULL, data = NULL, stat = "identity",
   parse = FALSE, ..., box.padding = unit(0.25, "lines"),
-  segment.color = "#666666", segment.size = 0.5, force = 1,
-  max.iter = 2000, expand = TRUE, na.rm = FALSE, show.legend = NA,
-  inherit.aes = TRUE)
+  point.padding = unit(0, "lines"), segment.color = "#666666",
+  segment.size = 0.5, force = 1, max.iter = 2000, na.rm = FALSE,
+  show.legend = NA, inherit.aes = TRUE)
 }
 \arguments{
 \item{mapping}{Set of aesthetic mappings created by \code{\link[ggplot2]{aes}} or
@@ -44,10 +44,13 @@ displayed as described in ?plotmath}
   \item Other arguments passed on to the stat.
   }}
 
-\item{box.padding}{Amount of padding around bounding box. Defaults to 0.25
-lines.}
+\item{box.padding}{Amount of padding around bounding box. Defaults to
+\code{unit(0.25, "lines")}.}
 
 \item{label.padding}{Amount of padding around label. Defaults to 0.25 lines.}
+
+\item{point.padding}{Amount of padding around labeled point. Defaults to
+\code{unit(0, "lines")}.}
 
 \item{label.r}{Radius of rounded corners. Defaults to 0.15 lines.}
 
@@ -58,10 +61,6 @@ to 1.}
 
 \item{max.iter}{Maximum number of iterations to try to resolve overlaps.
 Defaults to 2000.}
-
-\item{expand}{If \code{TRUE} (the default), allow text labels to be placed
-in the expanded plot area. Otherwise, limit their positions to the range
-of the data.}
 
 \item{na.rm}{If \code{FALSE} (the default), removes missing values with
 a warning.  If \code{TRUE} silently removes missing values.}
@@ -108,7 +107,7 @@ aesthetic controls the background colour of the label.
 \section{Alignment}{
 
 The repulsive geoms reposition text labels to avoid overlap, so the
-following parameters are not supported:
+following parameters are \strong{not supported}:
 
 \itemize{
   \item \code{hjust}
@@ -129,7 +128,8 @@ p + geom_text_repel()
 p + geom_label_repel()
 
 \dontrun{
-p + geom_text_repel(family = "Times New Roman")
+p + geom_text_repel(family = "Times New Roman",
+  box.padding = unit(0.5, "lines"))
 
 # Add aesthetic mappings
 p + geom_text_repel(aes(colour = factor(cyl)))
