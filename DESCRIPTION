@@ -1,5 +1,5 @@
 Package: ggrepel
-Version: 0.4
+Version: 0.5
 Authors@R: c(person("Kamil", "Slowikowski", role = c("aut", "cre"),
     email = "kslowikowski@fas.harvard.edu"))
 Title: Repulsive Text and Label Geoms for 'ggplot2'
@@ -17,8 +17,8 @@ BugReports: http://github.com/slowkow/ggrepel/issues
 RoxygenNote: 5.0.1
 LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2016-01-12 18:05:52 UTC; slowikow
+Packaged: 2016-02-08 13:56:35 UTC; slowikow
 Author: Kamil Slowikowski [aut, cre]
 Maintainer: Kamil Slowikowski <kslowikowski@fas.harvard.edu>
 Repository: CRAN
-Date/Publication: 2016-01-12 23:20:46
+Date/Publication: 2016-02-08 15:39:34

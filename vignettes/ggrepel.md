@@ -1,7 +1,7 @@
 ---
 title: "ggrepel Usage Examples"
 author: "Kamil Slowikowski"
-date: "2016-01-12"
+date: "2016-02-07"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{ggrepel Usage Examples}
@@ -71,8 +71,6 @@ However, the following parameters are not supported:
 
 - `hjust`
 - `vjust`
-- `nudge_x`
-- `nudge_y`
 - `position`
 - `check_overlap`
 
@@ -81,14 +79,19 @@ However, the following parameters are not supported:
 - `segment.color` is the line segment color
 - `box.padding` is the padding surrounding the text bounding box
 - `point.padding` is the padding around the labeled point
+- `arrow` is the specification for arrow heads created by `grid::arrow`
 - `force` is the force of repulsion between overlapping text labels
 - `max.iter` is the maximum number of iterations to attempt to resolve overlaps
+- `nudge_x` is how much to shift the starting position of the text label along
+  the x axis
+- `nudge_x` is how much to shift the starting position of the text label along
+  the y axis
 
 
 ```r
 set.seed(42)
 ggplot(mtcars) +
-  geom_point(aes(wt, mpg), color = 'red') +
+  geom_point(aes(wt, mpg), color = 'grey', size = 4, shape = 15) +
   geom_text_repel(
     aes(
       wt, mpg,
@@ -97,11 +100,15 @@ ggplot(mtcars) +
     ),
     size = 5,
     fontface = 'bold',
-    segment.color = 'red',
-    box.padding = unit(0.3, 'lines'),
-    point.padding = unit(0.4, 'lines'),
-    force = 2,
-    max.iter = 1e4
+    box.padding = unit(0.5, 'lines'),
+    point.padding = unit(1.6, 'lines'),
+    segment.color = '#555555',
+    segment.size = 0.5,
+    arrow = arrow(length = unit(0.01, 'npc')),
+    force = 1,
+    max.iter = 2e3,
+    nudge_x = ifelse(mtcars$cyl == 6, 1, 0),
+    nudge_y = ifelse(mtcars$cyl == 6, 8, 0)
   ) +
   scale_color_discrete(name = 'cyl') +
   theme_classic(base_size = 16)
@@ -117,21 +124,46 @@ ggplot(mtcars) +
 ```r
 set.seed(42)
 ggplot(mtcars) +
-  geom_point(aes(wt, mpg)) +
+  geom_point(aes(wt, mpg), size = 5, color = 'grey') +
   geom_label_repel(
     aes(wt, mpg, fill = factor(cyl), label = rownames(mtcars)),
     fontface = 'bold', color = 'white',
-    box.padding = unit(0.25, "lines")
+    box.padding = unit(0.25, "lines"),
+    point.padding = unit(0.5, "lines")
   ) +
   theme_classic(base_size = 16)
 ```
 
 <img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_label_repel-1.png" title="plot of chunk geom_label_repel" alt="plot of chunk geom_label_repel" width="700" />
 
+### Line plot
+
+
+```r
+set.seed(42)
+ggplot(Orange, aes(age, circumference, color = Tree)) +
+  geom_line() +
+  coord_cartesian(xlim = c(min(Orange$age), max(Orange$age) + 90)) +
+  geom_text_repel(
+    data = subset(Orange, age == max(age)),
+    aes(label = paste("Tree", Tree)),
+    size = 6,
+    nudge_x = 45,
+    segment.color = NA
+  ) +
+  theme_classic(base_size = 16) +
+  theme(legend.position = "none") +
+  labs(x = "Age (days)", y = "Circumference (mm)")
+```
+
+<img src="https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/line_plot-1.png" title="plot of chunk line_plot" alt="plot of chunk line_plot" width="700" />
+
 ### Volcano plot
 
 
 ```r
+set.seed(42)
+
 # Read Stephen Turner's data
 genes <- read.table("genes.txt.bz2", header = TRUE)
 genes$Significant <- ifelse(genes$padj < 0.05, "FDR < 0.05", "Not Sig")
@@ -204,7 +236,7 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ggrepel_0.4   ggplot2_2.0.0 knitr_1.12   
+## [1] ggrepel_0.4.5 ggplot2_2.0.0 knitr_1.12   
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Rcpp_0.12.3      codetools_0.2-14 digest_0.6.9     grid_3.2.3      

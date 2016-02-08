@@ -1,23 +1,71 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Euclidean distance between two numeric vectors.
-//' @param p1 A numeric vector.
-//' @param p2 A numeric vector.
+typedef struct {
+  double x, y;
+} Point;
+
+Point operator -(const Point& a, const Point& b) {
+  Point p = {a.x - b.x, a.y - b.y};
+  return p;
+}
+
+Point operator +(const Point& a, const Point& b) {
+  Point p = {a.x + b.x, a.y + b.y};
+  return p;
+}
+
+Point operator /(const Point& a, const double& b) {
+  Point p = {a.x / b, a.y / b};
+  return p;
+}
+
+Point operator *(const double& b, const Point& a) {
+  Point p = {a.x * b, a.y * b};
+  return p;
+}
+
+Point operator *(const Point& a, const double& b) {
+  Point p = {a.x * b, a.y * b};
+  return p;
+}
+
+typedef struct {
+  double x1, y1, x2, y2;
+} Box;
+
+Box operator +(const Box& b, const Point& p) {
+  Box c = {b.x1 + p.x, b.y1 + p.y, b.x2 + p.x, b.y2 + p.y};
+  return c;
+}
+
+//' Euclidean distance between two points.
+//' @param a A numeric vector.
+//' @param b A numeric vector.
+//' @return The distance between two points.
+//' @noRd
 // [[Rcpp::export]]
-double euclid(NumericVector p1, NumericVector p2) {
-  double retval = 0;
-  int n = p1.size();
-  for (int i = 0; i < n; i++) {
-    retval += pow(p2[i] - p1[i], 2);
-  }
-  return sqrt(retval);
+double euclid(NumericVector a, NumericVector b) {
+  return sqrt(
+    (a[0] - b[0]) * (a[0] - b[0]) +
+    (a[1] - b[1]) * (a[1] - b[1])
+  );
+}
+
+//' Euclidean distance between two points.
+//' @param a A point.
+//' @param b A point.
+//' @return The distance between two points.
+//' @noRd
+double euclid(Point a, Point b) {
+  return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
 //' Find the intersections between a line and a rectangle.
 //' @param p1 A point like \code{c(x, y)}
 //' @param p2 A point like \code{c(x, y)}
 //' @param b A rectangle like \code{c(x1, y1, x2, y2)}
+//' @noRd
 // [[Rcpp::export]]
 NumericVector intersect_line_rectangle(
     NumericVector p1, NumericVector p2, NumericVector b
@@ -25,6 +73,7 @@ NumericVector intersect_line_rectangle(
   double slope = (p2[1] - p1[1]) / (p2[0] - p1[0]);
   double intercept = p2[1] - p2[0] * slope;
   NumericMatrix retval(4, 2);
+  std::fill(retval.begin(), retval.end(), -INFINITY);
 
   double x, y;
 
@@ -54,10 +103,11 @@ NumericVector intersect_line_rectangle(
 
   int i = 0;
   int imin = 0;
-  double d = euclid(retval(i, _), p1);
-  double dmin = d;
-  for (i = 1; i < 4; i++) {
+  double d;
+  double dmin = INFINITY;
+  for (i = 0; i < 4; i++) {
     d = euclid(retval(i, _), p1);
+    // Rcout << i << " euclid = " << d << std::endl;
     if (d < dmin) {
       dmin = d;
       imin = i;
@@ -68,67 +118,73 @@ NumericVector intersect_line_rectangle(
 }
 
 //' Move a box into the area specificied by x limits and y limits.
-//' @param b A numeric vector representing a box like \code{c(x1, y1, x2, y2)}
-//' @param xlim A numeric vector representing the limits on the x axis like
-//'   \code{c(xmin, xmax)}
-//' @param ylim A numeric vector representing the limits on the y axis like
-//'   \code{c(ymin, ymax)}
-// [[Rcpp::export]]
-NumericVector put_within_bounds(
-    NumericVector b, NumericVector xlim, NumericVector ylim
-) {
+//' @param b A box like \code{c(x1, y1, x2, y2)}
+//' @param xlim A Point with limits on the x axis like \code{c(xmin, xmax)}
+//' @param ylim A Point with limits on the y axis like \code{c(xmin, xmax)}
+//' @param force Magnitude of the force (defaults to \code{1e-6})
+//' @noRd
+Box put_within_bounds(Box b, Point xlim, Point ylim, double force = 1e-5) {
   double d;
-  if (b[0] < xlim[0]) {
-    d = fabs(b[0] - xlim[0]);
-    b[0] += d;
-    b[2] += d;
-  } else if (b[2] > xlim[1]) {
-    d = fabs(b[2] - xlim[1]);
-    b[0] -= d;
-    b[2] -= d;
+  if (b.x1 < xlim.x) {
+    d = std::max(fabs(b.x1 - xlim.x), 0.02);
+    b.x1 += force / pow(d, 2);
+    b.x2 += force / pow(d, 2);
+  } else if (b.x2 > xlim.y) {
+    d = std::max(fabs(b.x2 - xlim.y), 0.02);
+    b.x1 -= force / pow(d, 2);
+    b.x2 -= force / pow(d, 2);
   }
-  if (b[1] < ylim[0]) {
-    d = fabs(b[1] - ylim[0]);
-    b[1] += d;
-    b[3] += d;
-  } else if (b[3] > ylim[1]) {
-    d = fabs(b[3] - ylim[1]);
-    b[1] -= d;
-    b[3] -= d;
+  if (b.y1 < ylim.x) {
+    d = std::max(fabs(b.y1 - ylim.x), 0.02);
+    b.y1 += force / pow(d, 2);
+    b.y2 += force / pow(d, 2);
+  } else if (b.y2 > ylim.y) {
+    d = std::max(fabs(b.y2 - ylim.y), 0.02);
+    b.y1 -= force / pow(d, 2);
+    b.y2 -= force / pow(d, 2);
   }
   return b;
 }
 
 //' Get the coordinates of the center of a box.
-//' @param b A numeric vector representing a box like \code{c(x1, y1, x2, y2)}
+//' @param b A box like \code{c(x1, y1, x2, y2)}
+//' @noRd
 // [[Rcpp::export]]
 NumericVector centroid(NumericVector b) {
   return NumericVector::create((b[0] + b[2]) / 2, (b[1] + b[3]) / 2);
 }
 
-//' Test if a box overlaps another box.
-//' @param a A numeric vector representing a box like \code{c(x1, y1, x2, y2)}
-//' @param b A numeric vector representing a box like \code{c(x1, y1, x2, y2)}
-// [[Rcpp::export]]
-bool overlaps(NumericVector a, NumericVector b) {
-  return
-    b[0] <= a[2] &&
-    b[1] <= a[3] &&
-    b[2] >= a[0] &&
-    b[3] >= a[1];
+//' Get the coordinates of the center of a box.
+//' @param b A box like \code{c(x1, y1, x2, y2)}
+//' @noRd
+Point centroid(Box b) {
+  Point p = {(b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2};
+  return p;
 }
 
-//' Test if a point is within the boundaries of a box.
-//' @param p A point like \code{c(x, y)}
-//' @param b A numeric vector representing a box like \code{c(x1, y1, x2, y2)}
-// [[Rcpp::export]]
-bool point_within_box(NumericVector p, NumericVector b) {
+//' Test if a box overlaps another box.
+//' @param a A box like \code{c(x1, y1, x2, y2)}
+//' @param b A box like \code{c(x1, y1, x2, y2)}
+//' @noRd
+bool overlaps(Box a, Box b) {
   return
-    p[0] >= b[0] &&
-    p[0] <= b[2] &&
-    p[1] >= b[1] &&
-    p[1] <= b[3];
+    b.x1 <= a.x2 &&
+    b.y1 <= a.y2 &&
+    b.x2 >= a.x1 &&
+    b.y2 >= a.y1;
 }
+
+// //' Test if a point is within the boundaries of a box.
+// //' @param p A point like \code{c(x, y)}
+// //' @param b A box like \code{c(x1, y1, x2, y2)}
+// //' @noRd
+// bool point_within_box(Point p, Box b) {
+//   return
+//     p.x >= b.x1 &&
+//     p.x <= b.x2 &&
+//     p.y >= b.y1 &&
+//     p.y <= b.y2;
+// }
 
 //' Compute the repulsion force upon point \code{a} from point \code{b}.
 //'
@@ -138,15 +194,17 @@ bool point_within_box(NumericVector p, NumericVector b) {
 //' @param a A point like \code{c(x, y)}
 //' @param b A point like \code{c(x, y)}
 //' @param force Magnitude of the force (defaults to \code{1e-6})
-// [[Rcpp::export]]
-NumericVector repel_force(
-    NumericVector a, NumericVector b, double force = 0.000001
+//' @noRd
+Point repel_force(
+    Point a, Point b, double force = 0.000001
 ) {
-  a += rnorm(2, 0, force);
+  NumericVector r = rnorm(2, 0, force);
+  a.x += r[0];
+  a.y += r[1];
   // Constrain the minimum distance to be at least 0.01.
   double d = std::max(euclid(a, b), 0.02);
   // Compute a unit vector in the direction of the force.
-  NumericVector v = (a - b) / d;
+  Point v = (a - b) / d;
   // Divide the force by the squared distance.
   return force * v / pow(d, 2);
 }
@@ -159,20 +217,27 @@ NumericVector repel_force(
 //' @param a A point like \code{c(x, y)}
 //' @param b A point like \code{c(x, y)}
 //' @param force Magnitude of the force (defaults to \code{1e-6})
-// [[Rcpp::export]]
-NumericVector spring_force(
-    NumericVector a, NumericVector b, double force = 0.000001
+//' @noRd
+Point spring_force(
+    Point a, Point b, double force = 0.000001
 ) {
   double d = euclid(a, b);
-  d = d < 0.01 ? 0 : d;
-  // Compute a unit vector in the direction of the force.
-  NumericVector v = (a - b) / d;
-  return v * force * d;
+  Point v = {0, 0};
+  if (d > 0.01) {
+    // Compute a unit vector in the direction of the force.
+    v = (a - b) / d;
+    return v * force * d;
+  }
+  return v;
 }
 
 //' Adjust the layout of a list of potentially overlapping boxes.
-//' @param boxes A list of numeric vectors representing a box like
-//'   \code{list(c(x1, y1, x2, y2), c(x1, y1, x2, y2), ...)}
+//' @param data_points A numeric matrix with rows representing points like
+//'   \code{rbind(c(x, y), c(x, y), ...)}
+//' @param pad_point_x Padding around each data point on the x axis.
+//' @param pad_point_y Padding around each data point on the y axis.
+//' @param boxes A numeric matrix with rows representing boxes like
+//'   \code{rbind(c(x1, y1, x2, y2), c(x1, y1, x2, y2), ...)}
 //' @param xlim A numeric vector representing the limits on the x axis like
 //'   \code{c(xmin, xmax)}
 //' @param ylim A numeric vector representing the limits on the y axis like
@@ -180,9 +245,13 @@ NumericVector spring_force(
 //' @param force Magnitude of the force (defaults to \code{1e-6})
 //' @param maxiter Maximum number of iterations to try to resolve overlaps
 //'   (defaults to 2000)
+//' @noRd
 // [[Rcpp::export]]
 DataFrame repel_boxes(
-    NumericMatrix boxes, NumericVector xlim, NumericVector ylim,
+    NumericMatrix data_points,
+    double pad_point_x, double pad_point_y,
+    NumericMatrix boxes,
+    NumericVector xlim, NumericVector ylim,
     double force = 1e-6, int maxiter = 2000
 ) {
   int n = boxes.nrow();
@@ -193,80 +262,93 @@ DataFrame repel_boxes(
     force = 1e-6;
   }
 
-  // height over width
-  NumericVector ratios(n);
-  NumericVector b(4);
+  Point xbounds, ybounds;
+  xbounds.x = xlim[0];
+  xbounds.y = xlim[1];
+  ybounds.x = ylim[0];
+  ybounds.y = ylim[1];
+
+  std::vector<Box> Boxes(n);
+  std::vector<Box> DataBoxes(n);
+  std::vector<double> ratios(n);
+  std::vector<Point> original_centroids(n);
   for (int i = 0; i < n; i++) {
-    b = boxes(i, _);
-    ratios[i] = (b[3] - b[1]) / (b[2] - b[0]);
+    Boxes[i].x1 = boxes(i, 0);
+    Boxes[i].y1 = boxes(i, 1);
+    Boxes[i].x2 = boxes(i, 2);
+    Boxes[i].y2 = boxes(i, 3);
+    DataBoxes[i].x1 = data_points(i, 0) - pad_point_x;
+    DataBoxes[i].y1 = data_points(i, 1) - pad_point_y;
+    DataBoxes[i].x2 = data_points(i, 0) + pad_point_x;
+    DataBoxes[i].y2 = data_points(i, 1) + pad_point_y;
+    // height over width
+    ratios[i] = (Boxes[i].y2 - Boxes[i].y1) / (Boxes[i].x2 - Boxes[i].x1);
+    original_centroids[i] = centroid(Boxes[i]);
   }
-  NumericMatrix original_centroids(n, 2);
+
+  std::vector<Point> Points(n);
   for (int i = 0; i < n; i++) {
-    original_centroids(i, _) = centroid(boxes(i, _));
+    Points[i].x = data_points(i, 0);
+    Points[i].y = data_points(i, 1);
   }
 
   double total_force = 0;
-  // NumericVector forces(maxiter);
-  NumericVector f(2);
-  NumericVector ci(2);
-  NumericVector cj(2);
+  Point f, ci, cj;
 
   while (any_overlaps && iter < maxiter) {
     iter += 1;
     any_overlaps = false;
 
     for (int i = 0; i < n; i++) {
-      f[0] = 0;
-      f[1] = 0;
+      f.x = 0;
+      f.y = 0;
 
-      ci = centroid(boxes(i, _));
+      ci = centroid(Boxes[i]);
 
       for (int j = 0; j < n; j++) {
 
-        cj = centroid(boxes(j, _));
+        cj = centroid(Boxes[j]);
 
         if (i == j) {
-          // Repel the box from its own centroid.
-          if (point_within_box(original_centroids(i, _), boxes(i, _))) {
+          // Repel the box from its data point.
+          // if (point_within_box(Points[i], Boxes[i])) {
+          if (overlaps(DataBoxes[i], Boxes[i])) {
             any_overlaps = true;
-            f = f + repel_force(ci, original_centroids(i, _), force);
+            f = f + repel_force(ci, Points[i], force);
           }
         } else {
           // Repel the box from overlapping boxes.
-          if (overlaps(boxes(i, _), boxes(j, _))) {
+          if (overlaps(Boxes[i], Boxes[j])) {
             any_overlaps = true;
-            f = f + repel_force(ci, cj, force);
+            f = f + repel_force(ci, cj, force * 2);
           }
-          // Repel the box from overlapping centroids.
-          if (point_within_box(original_centroids(j, _), boxes(i, _))) {
+          // Repel the box from other data points.
+          // if (point_within_box(Points[j], Boxes[i])) {
+          if (overlaps(DataBoxes[j], Boxes[i])) {
             any_overlaps = true;
-            f = f + repel_force(ci, original_centroids(j, _), force);
+            f = f + repel_force(ci, Points[j], force);
           }
         }
       }
 
-      // Pull toward the label's point.
+      // Pull the box toward its original position.
       if (!any_overlaps) {
-        f = f + spring_force(original_centroids(i, _), ci, force);
+        f = f + spring_force(original_centroids[i], ci, force * 100);
       }
 
       // Scale the x force by the ratio of height/width.
-      f[0] = f[0] * ratios[i];
+      f.x = f.x * ratios[i];
 
       // Dampen the forces.
       f = f * (1 - 1e-3);
 
-      // forces[i - 1] += fabs(f[0]) + fabs(f[1]);
-      total_force += fabs(f[0]) + fabs(f[1]);
+      total_force += fabs(f.x) + fabs(f.y);
 
-      b = boxes(i, _);
-      boxes(i, _) = NumericVector::create(
-        b[0] + f[0], b[1] + f[1], b[2] + f[0], b[3] + f[1]
-      );
-      boxes(i, _) = put_within_bounds(boxes(i, _), xlim, ylim);
+      Boxes[i] = Boxes[i] + f;
+      Boxes[i] = put_within_bounds(Boxes[i], xbounds, ybounds);
     }
 
-    // If there are no forces between boxes, let's break the loop.
+    // If there are no forces, let's break the loop.
     if (total_force == 0) {
       break;
     }
@@ -287,9 +369,8 @@ DataFrame repel_boxes(
   NumericVector ys(n);
 
   for (int i = 0; i < n; i++) {
-    b = boxes(i, _);
-    xs[i] = (b[0] + b[2]) / 2;
-    ys[i] = (b[1] + b[3]) / 2;
+    xs[i] = (Boxes[i].x1 + Boxes[i].x2) / 2;
+    ys[i] = (Boxes[i].y1 + Boxes[i].y2) / 2;
   }
 
   return Rcpp::DataFrame::create(
