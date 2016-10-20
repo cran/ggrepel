@@ -1,4 +1,55 @@
 
+ggrepel 0.6.3 2016-10-14
+----------------------------------------------------------------
+
+* Use `point.padding=NA` to ignore data points in repulsion calculations.
+
+ggrepel 0.6.2 2016-10-06
+----------------------------------------------------------------
+
+* Stop the labels from escaping the plot boundaries instead of applying
+  a force at the boundary.
+
+* Call `set.seed` within `geom_text_repel()` and `geom_label_repel()` to
+  allow recreating identical plots. Fixes issue #33.
+
+* Add `min.segment.length` to `geom_text_repel()` and `geom_label_repel()`.
+
+ggrepel 0.6.1 2016-10-04
+----------------------------------------------------------------
+
+* Tweak `repel_boxes.cpp`. Dampen forces to tune how the labels move. The
+  result looks better, at least for the examples in the vignette.
+
+ggrepel 0.6.0 2016-10-03
+----------------------------------------------------------------
+
+* Do not draw labels with empty strings. When a label is an empty string,
+  the text will not be shown, the segment will not be drawn, but the
+  corresponding data point will repel other labels. Fixes issue #51.
+
+* Move `nudge_x` and `nudge_y` out of the aesthetics function `aes()`. This
+  makes ggrepel consistent with ggplot2 functions `geom_text()` and
+  `geom_label()`. Backwards incompatible with 0.5.1.
+
+* Restore `segment.color` as an option for `geom_text_repel()` and
+  `geom_label_repel()`.
+
+* Add `segment.alpha` as an option for `geom_text_repel()` and
+  `geom_label_repel()`.
+
+* Implement `angle` aesthetic for `geom_text_repel()`, the same way as done in
+  ggplot2 `geom_text()`.
+
+* Tweak `repel_boxes.cpp`. Do not weight repulsion force by ratios of bounding
+  box heights and widths. This seems to perform better, especially after
+  rotating text labels.
+
+ggrepel 0.5.1 2016-02-22
+----------------------------------------------------------------
+
+* Optimize C++ code further by reducing number of calls to `rnorm()`.
+
 ggrepel 0.5 2016-02-08
 ----------------------------------------------------------------
 

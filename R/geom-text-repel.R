@@ -13,8 +13,7 @@
 #' Text labels have height and width, but they are physical units, not data
 #' units. The amount of space they occupy on that plot is not constant in data
 #' units: when you resize a plot, labels stay the same size, but the size of
-#' the axes changes. Currently, the text labels will not be repositioned upon
-#' resizing a plot. This may change in future releases.
+#' the axes changes. The text labels are repositioned after resizing a plot.
 #'
 #' @section \code{geom_label_repel}:
 #' Currently \code{geom_label_repel} does not support the \code{rot} parameter
@@ -68,9 +67,14 @@
 #'   \code{unit(0.25, "lines")}.
 #' @param point.padding Amount of padding around labeled point. Defaults to
 #'   \code{unit(0, "lines")}.
-#' @param segment.color Color of the line segment connecting the data point to
-#'   the text labe. Defaults to \code{#666666}.
-#' @param segment.size Width of segment, in mm.
+#' @param segment.size Width of line segment connecting the data point to
+#'   the text label, in mm.
+#' @param segment.color Color of the line segment. Defaults to
+#'   \code{"#666666"}.
+#' @param segment.alpha Transparency of the line segment. Defaults to
+#'   \code{1}.
+#' @param min.segment.length Skip drawing segments shorter than this. Defaults
+#'   to \code{unit(0.5, "lines")}.
 #' @param arrow specification for arrow heads, as created by \code{\link[grid]{arrow}}
 #' @param force Force of repulsion between overlapping text labels. Defaults
 #'   to 1.
@@ -79,7 +83,9 @@
 #'
 #' @examples
 #'
-#' p <- ggplot(mtcars, aes(wt, mpg, label = rownames(mtcars)))
+#' p <- ggplot(mtcars,
+#'   aes(wt, mpg, label = rownames(mtcars), colour = factor(cyl))) +
+#'   geom_point()
 #'
 #' # Avoid overlaps by repelling text labels
 #' p + geom_text_repel()
@@ -91,8 +97,25 @@
 #'   box.padding = unit(0.5, "lines"))
 #'
 #' # Add aesthetic mappings
-#' p + geom_text_repel(aes(colour = factor(cyl)))
-#' p + geom_label_repel(aes(fill = factor(cyl)), colour = "white", fontface = "bold")
+#' p + geom_text_repel()
+#' p + geom_label_repel(colour = "white", fontface = "bold")
+#'
+#' # Draw all line segments
+#' p + geom_text_repel(aes(min.segment.length = unit(0, 'lines'))
+#'
+#' # Omit short line segments (default behavior)
+#' p + geom_text_repel(min.segment.length = unit(0.5, 'lines'))
+#'
+#' # Omit all line segments
+#' p + geom_text_repel(segment.color = NA)
+#'
+#' # Repel just the labels and totally ignore the data points
+#' p + geom_text_repel(point.padding = NA)
+#'
+#' # Hide some of the labels, but repel from all data points
+#' mtcars$label <- rownames(mtcars)
+#' mtcars$label[1:15] <- ""
+#' p + geom_text_repel(data = mtcars, aes(wt, mpg, label = label))
 #'
 #' # Nudge the starting positions
 #' p + geom_text_repel(nudge_x = ifelse(mtcars$cyl == 6, 1, 0),
@@ -111,12 +134,18 @@
 #' # Add a text annotation
 #' p +
 #'   geom_text_repel() +
-#'   annotate("text", label = "plot mpg vs. wt", x = 2, y = 15, size = 8, colour = "red")
+#'   annotate(
+#'     "text", label = "plot mpg vs. wt",
+#'     x = 2, y = 15, size = 8, colour = "red"
+#'   )
 #'
 #' # Add arrows
 #' p +
 #'   geom_point(colour = "red") +
-#'   geom_text_repel(arrow = arrow(length = unit(0.02, "npc")), box.padding = unit(1, "lines"))
+#'   geom_text_repel(
+#'     arrow = arrow(length = unit(0.02, "npc")),
+#'     box.padding = unit(1, "lines")
+#'   )
 #' }
 #' @export
 geom_text_repel <- function(
@@ -127,6 +156,8 @@ geom_text_repel <- function(
   point.padding = unit(1e-6, "lines"),
   segment.color = "#666666",
   segment.size = 0.5,
+  segment.alpha = 1,
+  min.segment.length = unit(0.5, "lines"),
   arrow = NULL,
   force = 1,
   max.iter = 2000,
@@ -151,6 +182,8 @@ geom_text_repel <- function(
       point.padding = point.padding,
       segment.color = segment.color,
       segment.size = segment.size,
+      segment.alpha = segment.alpha,
+      min.segment.length = min.segment.length,
       arrow = arrow,
       force = force,
       max.iter = max.iter,
@@ -182,6 +215,8 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     point.padding = unit(1e-6, "lines"),
     segment.color = "#666666",
     segment.size = 0.5,
+    segment.alpha = 1,
+    min.segment.length = unit(0.5, "lines"),
     arrow = NULL,
     force = 1,
     max.iter = 2000,
@@ -199,9 +234,8 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
 
     # Transform the nudges to the panel scales.
     nudges <- data.frame(
-      x = data$x + nudge_x, y = data$y + nudge_y
-      # x = rep_len(nudge_x, nrow(data)),
-      # y = rep_len(nudge_y, nrow(data))
+      x = data$x + nudge_x,
+      y = data$y + nudge_y
     )
     nudges <- coord$transform(nudges, panel_scales)
 
@@ -221,6 +255,8 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
       point.padding = point.padding,
       segment.color = segment.color,
       segment.size = segment.size,
+      segment.alpha = segment.alpha,
+      min.segment.length = min.segment.length,
       arrow = arrow,
       force = force,
       max.iter = max.iter,
@@ -238,15 +274,21 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
 makeContent.textrepeltree <- function(x) {
 
   # The padding around each bounding box.
-  pad.x <- convertWidth(x$box.padding, "native", valueOnly = TRUE)
-  pad.y <- convertHeight(x$box.padding, "native", valueOnly = TRUE)
+  box_padding_x <- convertWidth(x$box.padding, "native", valueOnly = TRUE)
+  box_padding_y <- convertHeight(x$box.padding, "native", valueOnly = TRUE)
 
   # The padding around each point.
-  pad.point.x <- convertWidth(x$point.padding, "native", valueOnly = TRUE)
-  pad.point.y <- convertHeight(x$point.padding, "native", valueOnly = TRUE)
+  if (is.na(x$point.padding)) {
+    x$point.padding = unit(0, "lines")
+  }
+  point_padding_x <- convertWidth(x$point.padding, "native", valueOnly = TRUE)
+  point_padding_y <- convertHeight(x$point.padding, "native", valueOnly = TRUE)
+
+  # Do not create text labels for empty strings.
+  valid_strings <- which(x$lab != "")
 
   # Create a dataframe with x1 y1 x2 y2
-  boxes <- lapply(1:nrow(x$data), function(i) {
+  boxes <- lapply(valid_strings, function(i) {
     row <- x$data[i, , drop = FALSE]
     tg <- textGrob(
       x$lab[i],
@@ -262,18 +304,19 @@ makeContent.textrepeltree <- function(x) {
     gw <- convertWidth(grobWidth(tg), "native", TRUE) / 2
     gh <- convertHeight(grobHeight(tg), "native", TRUE) / 2
     c(
-      "x1" = row$x - gw - pad.x + x$nudges$x[i],
-      "y1" = row$y - gh - pad.y + x$nudges$y[i],
-      "x2" = row$x + gw + pad.x + x$nudges$x[i],
-      "y2" = row$y + gh + pad.y + x$nudges$y[i]
+      "x1" = row$x - gw - box_padding_x + x$nudges$x[i],
+      "y1" = row$y - gh - box_padding_y + x$nudges$y[i],
+      "x2" = row$x + gw + box_padding_x + x$nudges$x[i],
+      "y2" = row$y + gh + box_padding_y + x$nudges$y[i]
     )
   })
 
   # Repel overlapping bounding boxes away from each other.
+  set.seed(stats::rnorm(1))
   repel <- repel_boxes(
     data_points = cbind(x$data$x, x$data$y),
-    pad_point_x = pad.point.x,
-    pad_point_y = pad.point.y,
+    point_padding_x = point_padding_x,
+    point_padding_y = point_padding_y,
     boxes = do.call(rbind, boxes),
     xlim = range(x$limits$x),
     ylim = range(x$limits$y),
@@ -281,28 +324,32 @@ makeContent.textrepeltree <- function(x) {
     maxiter = x$max.iter
   )
 
-  grobs <- lapply(1:nrow(x$data), function(i) {
-    row <- x$data[i, , drop = FALSE]
+  grobs <- lapply(seq_along(valid_strings), function(i) {
+    xi <- valid_strings[i]
+    row <- x$data[xi, , drop = FALSE]
+    # browser()
     textRepelGrob(
-      x$lab[i],
+      x$lab[xi],
       x = unit(repel$x[i], "native"),
       y = unit(repel$y[i], "native"),
-      x.orig = unit(x$data$x[i], "native"),
-      y.orig = unit(x$data$y[i], "native"),
+      x.orig = unit(x$data$x[xi], "native"),
+      y.orig = unit(x$data$y[xi], "native"),
+      rot = row$angle,
       box.padding = x$box.padding,
       point.padding = x$point.padding,
       text.gp = gpar(
-        col = row$colour,
+        col = scales::alpha(row$colour, row$alpha),
         fontsize = row$size * .pt,
         fontfamily = row$family,
         fontface = row$fontface,
         lineheight = row$lineheight
       ),
       segment.gp = gpar(
-        col = x$segment.color,
+        col = scales::alpha(x$segment.color, x$segment.alpha),
         lwd = x$segment.size * .pt
       ),
-      arrow = x$arrow
+      arrow = x$arrow,
+      min.segment.length = x$min.segment.length
     )
   })
   class(grobs) <- "gList"
@@ -316,6 +363,7 @@ textRepelGrob <- function(
   y = unit(0.5, "npc"),
   x.orig = unit(0.5, "npc"),
   y.orig = unit(0.5, "npc"),
+  rot = 0,
   default.units = "npc",
   just = "center",
   box.padding = unit(0.25, "lines"),
@@ -324,7 +372,8 @@ textRepelGrob <- function(
   text.gp = gpar(),
   segment.gp = gpar(),
   vp = NULL,
-  arrow = NULL
+  arrow = NULL,
+  min.segment.length = unit(0.5, "lines")
 ) {
 
   stopifnot(length(label) == 1)
@@ -340,6 +389,7 @@ textRepelGrob <- function(
     y = y,
     x.orig = x.orig,
     y.orig = y.orig,
+    rot = rot,
     just = just,
     box.padding = box.padding,
     point.padding = point.padding,
@@ -348,7 +398,8 @@ textRepelGrob <- function(
     segment.gp = segment.gp,
     vp = vp,
     cl = "textrepelgrob",
-    arrow = arrow
+    arrow = arrow,
+    min.segment.length = min.segment.length
   )
 }
 
@@ -365,6 +416,7 @@ makeContent.textrepelgrob <- function(x) {
     x$label,
     x$x + 2 * (0.5 - hj) * x$box.padding,
     x$y + 2 * (0.5 - vj) * x$box.padding,
+    rot = x$rot,
     just = c(hj, vj),
     gp = x$text.gp,
     name = "text"
@@ -375,7 +427,7 @@ makeContent.textrepelgrob <- function(x) {
   y1 <- convertHeight(x$y - 0.5 * grobHeight(t), "native", TRUE)
   y2 <- convertHeight(x$y + 0.5 * grobHeight(t), "native", TRUE)
 
-  orig <- c(
+  point_pos <- c(
     convertWidth(x$x.orig, "native", TRUE),
     convertHeight(x$y.orig, "native", TRUE)
   )
@@ -384,27 +436,57 @@ makeContent.textrepelgrob <- function(x) {
 
   # Get the coordinates of the intersection between the line from the
   # original data point to the centroid and the rectangle's edges.
-  pad.x <- convertWidth(unit(0.25, "lines"), "native", TRUE) / 2
-  pad.y <- convertHeight(unit(0.25, "lines"), "native", TRUE) / 2
-  b <- c(x1 - pad.x, y1 - pad.y, x2 + pad.x, y2 + pad.y)
-  int <- intersect_line_rectangle(orig, center, b)
+  extra_padding_x <- convertWidth(unit(0.25, "lines"), "native", TRUE) / 2
+  extra_padding_y <- convertHeight(unit(0.25, "lines"), "native", TRUE) / 2
+  text_box <- c(
+    x1 - extra_padding_x, y1 - extra_padding_y,
+    x2 + extra_padding_x, y2 + extra_padding_y
+  )
+  int <- intersect_line_rectangle(point_pos, center, text_box)
+
+  # Check if the data point is inside the label box.
+  point_inside <- FALSE
+  if (text_box[1] <= point_pos[1] && point_pos[1] <= text_box[3] &&
+      text_box[2] <= point_pos[2] && point_pos[2] <= text_box[4]) {
+    point_inside <- TRUE
+  }
 
   # Nudge the original data point toward the label with point.padding.
-  pad.x <- convertWidth(x$point.padding, "native", TRUE) / 2
-  pad.y <- convertHeight(x$point.padding, "native", TRUE) / 2
-  b <- c(orig[1] - pad.x, orig[2] - pad.y, orig[1] + pad.x, orig[2] + pad.y)
-  orig <- intersect_line_rectangle(center, orig, b)
+  point_padding_x <- convertWidth(x$point.padding, "native", TRUE) / 2
+  point_padding_y <- convertHeight(x$point.padding, "native", TRUE) / 2
+  point_padding <- point_padding_x > 0 & point_padding_y > 0
+  if (point_padding) {
+    point_box <- c(
+      point_pos[1] - point_padding_x, point_pos[2] - point_padding_y,
+      point_pos[1] + point_padding_x, point_pos[2] + point_padding_y
+    )
+    point_pos <- intersect_line_rectangle(center, point_pos, point_box)
+  }
 
-  s <- segmentsGrob(
-    x0 = int[1],
-    y0 = int[2],
-    x1 = orig[1],
-    y1 = orig[2],
-    default.units = "native",
-    gp = x$segment.gp,
-    name = "segment",
-    arrow = x$arrow
-  )
+  # Compute the distance between the data point and the edge of the text box.
+  dx <- abs(int[1] - point_pos[1])
+  dy <- abs(int[2] - point_pos[2])
+  d <- sqrt(dx * dx + dy * dy)
+  # Scale the unit vector by the minimum segment length.
+  if (d > 0) {
+    mx <- convertWidth(x$min.segment.length, "native", TRUE)
+    my <- convertHeight(x$min.segment.length, "native", TRUE)
+    min.segment.length <- sqrt((mx * dx / d) ^ 2 + (my * dy / d) ^ 2)
+  }
 
-  setChildren(x, gList(s, t))
+  if (!point_inside && d > 0 && euclid(int, point_pos) > min.segment.length) {
+    s <- segmentsGrob(
+      x0 = int[1],
+      y0 = int[2],
+      x1 = point_pos[1],
+      y1 = point_pos[2],
+      default.units = "native",
+      gp = x$segment.gp,
+      name = "segment",
+      arrow = x$arrow
+    )
+    setChildren(x, gList(s, t))
+  } else {
+    setChildren(x, gList(t))
+  }
 }

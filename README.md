@@ -1,7 +1,7 @@
 # ggrepel
 
 [![Build Status](https://travis-ci.org/slowkow/ggrepel.svg?branch=master)](https://travis-ci.org/slowkow/ggrepel)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/ggrepel)](http://cran.r-project.org/package=ggrepel)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/ggrepel)](https://CRAN.R-project.org/package=ggrepel)
 [![CRAN_Downloads_Badge](http://cranlogs.r-pkg.org/badges/grand-total/ggrepel?color=brightgreen)](http://cranlogs.r-pkg.org/downloads/total/last-month/ggrepel)
 
 `ggrepel` provides geoms for [ggplot2] to repel overlapping text labels.
@@ -41,6 +41,12 @@ Alternatively, install the latest development version from github:
 ```r
 install.packages("devtools")
 devtools::install_github("slowkow/ggrepel")
+```
+
+Or install a tagged version:
+
+```r
+devtools::install_github("slowkow/ggrepel@0.6.2")
 ```
 
 ## Contributing
