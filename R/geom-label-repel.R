@@ -12,9 +12,10 @@ geom_label_repel <- function(
   point.padding = unit(1e-6, "lines"),
   label.r = unit(0.15, "lines"),
   label.size = 0.25,
-  segment.color = "#666666",
+  segment.colour = NULL,
+  segment.color = NULL,
   segment.size = 0.5,
-  segment.alpha = 1,
+  segment.alpha = NULL,
   min.segment.length = unit(0.5, "lines"),
   arrow = NULL,
   force = 1,
@@ -40,7 +41,7 @@ geom_label_repel <- function(
       point.padding  = point.padding,
       label.r = label.r,
       label.size = label.size,
-      segment.color = segment.color,
+      segment.colour = segment.color %||% segment.colour,
       segment.size = segment.size,
       segment.alpha = segment.alpha,
       min.segment.length = min.segment.length,
@@ -78,9 +79,9 @@ GeomLabelRepel <- ggproto(
     point.padding = unit(1e-6, "lines"),
     label.r = unit(0.15, "lines"),
     label.size = 0.25,
-    segment.color = "#666666",
+    segment.colour = NULL,
     segment.size = 0.5,
-    segment.alpha = 1,
+    segment.alpha = NULL,
     min.segment.length = unit(0.5, "lines"),
     arrow = NULL,
     force = 1,
@@ -92,10 +93,6 @@ GeomLabelRepel <- ggproto(
     if (parse) {
       lab <- parse(text = as.character(lab))
     }
-
-    # Get the x and y limits of the panel area.
-    limits <- data.frame(x = panel_scales$x.range, y = panel_scales$y.range)
-    limits <- coord$transform(limits, panel_scales)
 
     # Transform the nudges to the panel scales.
     nudges <- data.frame(
@@ -112,7 +109,7 @@ GeomLabelRepel <- ggproto(
     nudges$y <- nudges$y - data$y
 
     ggname("geom_label_repel", gTree(
-      limits = limits,
+      limits = data.frame(x = c(0, 1), y = c(0, 1)),
       data = data,
       lab = lab,
       nudges = nudges,
@@ -121,7 +118,7 @@ GeomLabelRepel <- ggproto(
       point.padding = point.padding,
       label.r = label.r,
       label.size = label.size,
-      segment.color = segment.color,
+      segment.colour = segment.colour,
       segment.size = segment.size,
       segment.alpha = segment.alpha,
       min.segment.length = min.segment.length,
@@ -173,8 +170,8 @@ makeContent.labelrepeltree <- function(x) {
       height = grobHeight(t) + 2 * x$label.padding,
       r = x$label.r,
       gp = gpar(
-      col = row$colour,
-      fill = alpha(row$fill, row$alpha),
+        col = scales::alpha(row$colour, row$alpha),
+        fill = scales::alpha(row$fill, row$alpha),
         lwd = x$label.size * .pt
       ),
       name = "box"
@@ -216,19 +213,19 @@ makeContent.labelrepeltree <- function(x) {
       point.padding = x$point.padding,
       r = x$label.r,
       text.gp = gpar(
-        col = row$colour,
+        col = scales::alpha(row$colour, row$alpha),
         fontsize = row$size * .pt,
         fontfamily = row$family,
         fontface = row$fontface,
         lineheight = row$lineheight
       ),
       rect.gp = gpar(
-        col = row$colour,
-        fill = alpha(row$fill, row$alpha),
+        col = scales::alpha(row$colour, row$alpha),
+        fill = scales::alpha(row$fill, row$alpha),
         lwd = x$label.size * .pt
       ),
       segment.gp = gpar(
-        col = scales::alpha(x$segment.color, x$segment.alpha),
+        col = scales::alpha(x$segment.colour %||% row$colour, x$segment.alpha %||% row$alpha),
         lwd = x$segment.size * .pt
       ),
       arrow = x$arrow,

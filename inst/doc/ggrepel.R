@@ -10,7 +10,7 @@ opts_chunk$set(
   out.width = 700,
   fig.width = 12,
   fig.height = 8,
-  dpi = 144,
+  dpi = 84,
   cache.path = "cache/ggrepel/",
   fig.path = "figures/ggrepel/",
   concordance = TRUE

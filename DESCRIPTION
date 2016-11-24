@@ -1,7 +1,9 @@
 Package: ggrepel
-Version: 0.6.3
-Authors@R: c(person("Kamil", "Slowikowski", role = c("aut", "cre"),
-    email = "kslowikowski@fas.harvard.edu"))
+Version: 0.6.5
+Authors@R: c(
+    person("Kamil", "Slowikowski", email = "kslowikowski@gmail.com", role = c("aut", "cre")),
+    person("Jean-Olivier", "Irisson", role = "ctb")
+    )
 Title: Repulsive Text and Label Geoms for 'ggplot2'
 Description: 
     Provides text and label geoms for 'ggplot2' that help to avoid overlapping
@@ -11,14 +13,15 @@ Depends: R (>= 3.0.0), ggplot2 (>= 2.0.0)
 Imports: grid, Rcpp, scales (>= 0.3.0)
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
-License: GPL-2
+License: GPL-3 | file LICENSE
 URL: http://github.com/slowkow/ggrepel
 BugReports: http://github.com/slowkow/ggrepel/issues
 RoxygenNote: 5.0.1
 LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2016-10-20 00:41:56 UTC; slowikow
-Author: Kamil Slowikowski [aut, cre]
-Maintainer: Kamil Slowikowski <kslowikowski@fas.harvard.edu>
+Packaged: 2016-11-23 19:15:14 UTC; slowikow
+Author: Kamil Slowikowski [aut, cre],
+  Jean-Olivier Irisson [ctb]
+Maintainer: Kamil Slowikowski <kslowikowski@gmail.com>
 Repository: CRAN
-Date/Publication: 2016-10-20 10:52:21
+Date/Publication: 2016-11-24 07:47:54
