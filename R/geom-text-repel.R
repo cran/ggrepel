@@ -63,10 +63,15 @@
 #'   }
 #' @param nudge_x,nudge_y Horizontal and vertical adjustments to nudge the
 #'   starting position of each text label.
-#' @param box.padding Amount of padding around bounding box. Defaults to
-#'   \code{unit(0.25, "lines")}.
-#' @param point.padding Amount of padding around labeled point. Defaults to
-#'   \code{unit(0, "lines")}.
+#' @param xlim,ylim Limits for the x and y axes. Text labels will be constrained
+#'   to these limits. By default, text labels are constrained to the entire plot
+#'   area.
+#' @param box.padding Amount of padding around bounding box, as unit or number.
+#'   Defaults to 0.25. (Default unit is lines, but other units can be specified
+#'   by passing \code{unit(x, "units")}).
+#' @param point.padding Amount of padding around labeled point, as unit or
+#'   number. Defaults to 0. (Default unit is lines, but other units can be
+#'   specified by passing \code{unit(x, "units")}).
 #' @param segment.size Width of line segment connecting the data point to
 #'   the text label, in mm.
 #' @param segment.colour,segment.color Colour of the line segment. Defaults to the same colour
@@ -74,13 +79,17 @@
 #'   US spelling will take precedence.
 #' @param segment.alpha Transparency of the line segment. Defaults to the same
 #'   transparency as the text.
-#' @param min.segment.length Skip drawing segments shorter than this. Defaults
-#'   to \code{unit(0.5, "lines")}.
+#' @param min.segment.length Skip drawing segments shorter than this, as unit or
+#'   number. Defaults to 0.5. (Default unit is lines, but other units can be
+#'   specified by passing \code{unit(x, "units")}).
 #' @param arrow specification for arrow heads, as created by \code{\link[grid]{arrow}}
 #' @param force Force of repulsion between overlapping text labels. Defaults
 #'   to 1.
 #' @param max.iter Maximum number of iterations to try to resolve overlaps.
 #'   Defaults to 2000.
+#' @param direction "both", "x", or "y" -- direction in which to adjust position of labels
+#' @param seed Random seed passed to \code{\link[base]{set.seed}}. Defaults to
+#'   \code{NA}, which means that \code{set.seed} will not be called.
 #'
 #' @examples
 #'
@@ -95,17 +104,17 @@
 #'
 #' \dontrun{
 #' p + geom_text_repel(family = "Times New Roman",
-#'   box.padding = unit(0.5, "lines"))
+#'   box.padding = 0.5)
 #'
 #' # Add aesthetic mappings
 #' p + geom_text_repel(aes(alpha=wt, size=mpg))
 #' p + geom_label_repel(aes(fill=factor(cyl)), colour="white", segment.colour="black")
 #'
 #' # Draw all line segments
-#' p + geom_text_repel(min.segment.length = unit(0, "lines"))
+#' p + geom_text_repel(min.segment.length = 0)
 #'
 #' # Omit short line segments (default behavior)
-#' p + geom_text_repel(min.segment.length = unit(0.5, "lines"))
+#' p + geom_text_repel(min.segment.length = 0.5)
 #'
 #' # Omit all line segments
 #' p + geom_text_repel(segment.colour = NA)
@@ -121,6 +130,7 @@
 #' # Nudge the starting positions
 #' p + geom_text_repel(nudge_x = ifelse(mtcars$cyl == 6, 1, 0),
 #'                     nudge_y = ifelse(mtcars$cyl == 6, 8, 0))
+#'
 #' # Change the text size
 #' p + geom_text_repel(aes(size = wt))
 #' # Scale height of text, rather than sqrt(height)
@@ -145,28 +155,33 @@
 #'   geom_point(colour = "red") +
 #'   geom_text_repel(
 #'     arrow = arrow(length = unit(0.02, "npc")),
-#'     box.padding = unit(1, "lines")
+#'     box.padding = 1
 #'   )
+#'
 #' }
 #' @export
 geom_text_repel <- function(
   mapping = NULL, data = NULL, stat = "identity",
   parse = FALSE,
   ...,
-  box.padding = unit(0.25, "lines"),
-  point.padding = unit(1e-6, "lines"),
+  box.padding = 0.25,
+  point.padding = 1e-6,
   segment.colour = NULL,
   segment.color = NULL,
   segment.size = 0.5,
   segment.alpha = NULL,
-  min.segment.length = unit(0.5, "lines"),
+  min.segment.length = 0.5,
   arrow = NULL,
   force = 1,
   max.iter = 2000,
   nudge_x = 0,
   nudge_y = 0,
+  xlim = c(NA, NA),
+  ylim = c(NA, NA),
   na.rm = FALSE,
   show.legend = NA,
+  direction = c("both","y","x"),
+  seed = NA,
   inherit.aes = TRUE
 ) {
   layer(
@@ -180,17 +195,21 @@ geom_text_repel <- function(
     params = list(
       parse = parse,
       na.rm = na.rm,
-      box.padding = box.padding,
-      point.padding = point.padding,
+      box.padding = to_unit(box.padding),
+      point.padding = to_unit(point.padding),
       segment.colour = segment.color %||% segment.colour,
       segment.size = segment.size,
       segment.alpha = segment.alpha,
-      min.segment.length = min.segment.length,
+      min.segment.length = to_unit(min.segment.length),
       arrow = arrow,
       force = force,
       max.iter = max.iter,
       nudge_x = nudge_x,
       nudge_y = nudge_y,
+      xlim = xlim,
+      ylim = ylim,
+      direction = match.arg(direction),
+      seed = seed,
       ...
     )
   )
@@ -213,21 +232,28 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     data, panel_scales, coord,
     parse = FALSE,
     na.rm = FALSE,
-    box.padding = unit(0.25, "lines"),
-    point.padding = unit(1e-6, "lines"),
+    box.padding = 0.25,
+    point.padding = 1e-6,
     segment.colour = NULL,
     segment.size = 0.5,
     segment.alpha = NULL,
-    min.segment.length = unit(0.5, "lines"),
+    min.segment.length = 0.5,
     arrow = NULL,
     force = 1,
     max.iter = 2000,
     nudge_x = 0,
-    nudge_y = 0
+    nudge_y = 0,
+    xlim = c(NA, NA),
+    ylim = c(NA, NA),
+    direction = "both",
+    seed = NA
   ) {
     lab <- data$label
     if (parse) {
       lab <- parse(text = as.character(lab))
+    }
+    if (!length(which(not_empty(lab)))) {
+      return()
     }
 
     # Transform the nudges to the panel scales.
@@ -244,20 +270,30 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     nudges$x <- nudges$x - data$x
     nudges$y <- nudges$y - data$y
 
+    # Transform limits to panel scales.
+    limits <- data.frame(x = xlim, y = ylim)
+    limits <- coord$transform(limits, panel_scales)
+
+    # Fill NAs with defaults.
+    limits$x[is.na(limits$x)] <- c(0, 1)[is.na(limits$x)]
+    limits$y[is.na(limits$y)] <- c(0, 1)[is.na(limits$y)]
+
     ggname("geom_text_repel", gTree(
-      limits = data.frame(x = c(0, 1), y = c(0, 1)),
+      limits = limits,
       data = data,
       lab = lab,
       nudges = nudges,
-      box.padding = box.padding,
-      point.padding = point.padding,
+      box.padding = to_unit(box.padding),
+      point.padding = to_unit(point.padding),
       segment.colour = segment.colour,
       segment.size = segment.size,
       segment.alpha = segment.alpha,
-      min.segment.length = min.segment.length,
+      min.segment.length = to_unit(min.segment.length),
       arrow = arrow,
       force = force,
       max.iter = max.iter,
+      direction = direction,
+      seed = seed,
       cl = "textrepeltree"
     ))
   },
@@ -283,7 +319,7 @@ makeContent.textrepeltree <- function(x) {
   point_padding_y <- convertHeight(x$point.padding, "native", valueOnly = TRUE)
 
   # Do not create text labels for empty strings.
-  valid_strings <- which(x$lab != "")
+  valid_strings <- which(not_empty(x$lab))
 
   # Create a dataframe with x1 y1 x2 y2
   boxes <- lapply(valid_strings, function(i) {
@@ -309,8 +345,12 @@ makeContent.textrepeltree <- function(x) {
     )
   })
 
+  # Make the repulsion reproducible if desired.
+  if (is.null(x$seed) || !is.na(x$seed)) {
+      set.seed(x$seed)
+  }
+
   # Repel overlapping bounding boxes away from each other.
-  set.seed(stats::rnorm(1))
   repel <- repel_boxes(
     data_points = cbind(x$data$x, x$data$y),
     point_padding_x = point_padding_x,
@@ -319,7 +359,8 @@ makeContent.textrepeltree <- function(x) {
     xlim = range(x$limits$x),
     ylim = range(x$limits$y),
     force = x$force * 1e-6,
-    maxiter = x$max.iter
+    maxiter = x$max.iter,
+    direction = x$direction
   )
 
   grobs <- lapply(seq_along(valid_strings), function(i) {
@@ -368,14 +409,14 @@ textRepelGrob <- function(
   rot = 0,
   default.units = "npc",
   just = "center",
-  box.padding = unit(0.25, "lines"),
-  point.padding = unit(1e-6, "lines"),
+  box.padding = 0.25,
+  point.padding = 1e-6,
   name = NULL,
   text.gp = gpar(),
   segment.gp = gpar(),
   vp = NULL,
   arrow = NULL,
-  min.segment.length = unit(0.5, "lines")
+  min.segment.length = 0.5
 ) {
 
   stopifnot(length(label) == 1)

@@ -84,8 +84,7 @@ ggplot(mtcars) +
   geom_label_repel(
     aes(wt, mpg, fill = factor(cyl), label = rownames(mtcars)),
     fontface = 'bold', color = 'white',
-    box.padding = unit(0.35, "lines"),
-    point.padding = unit(0.5, "lines"),
+    box.padding = 0.35, point.padding = 0.5,
     segment.color = 'grey50'
   ) +
   theme_classic(base_size = 16)
@@ -117,8 +116,9 @@ However, the following parameters are not supported:
   the x axis
 - `nudge_y` is how much to shift the starting position of the text label along
   the y axis
-  
-Here is an example that uses all of these options:
+- `direction` is what direction to allow movement of the label, either "both" (default), "x", or "y"
+
+Here is an example that uses most of these options:
 
 ```{r geom_text_repel_options, echo=TRUE, fig.width=9, fig.height=7}
 set.seed(42)
@@ -136,9 +136,9 @@ ggplot(mtcars) +
     family = 'Times',
     fontface = 'bold',
     # Add extra padding around each text label.
-    box.padding = unit(0.5, 'lines'),
+    box.padding = 0.5,
     # Add extra padding around each data point.
-    point.padding = unit(1.6, 'lines'),
+    point.padding = 1.6,
     # Color of the line segments.
     segment.color = '#cccccc',
     # Width of the line segments.
@@ -193,11 +193,71 @@ ggplot(mtcars, aes(wt, mpg)) +
       size = hp,
       label = label
     ),
-    point.padding = unit(0.25, "lines"),
-    box.padding = unit(0.25, "lines"),
+    point.padding = 0.25,
+    box.padding = 0.25,
     nudge_y = 0.1
   ) +
   theme_bw(base_size = 16)
+```
+
+### Limit labels to a specific area
+
+Use `xlim` and `ylim` to constrain the labels to a specific area. Limits are
+specified in data coordinates. Use `NA` when there is no lower or upper bound
+in a particular direction.
+
+```{r label_limits, echo=TRUE, fig.width=9, fig.height=7}
+set.seed(42)
+data <- mtcars
+mu <- mean(data$wt)
+
+left <- data[data$wt < mu,]
+right <- data[data$wt >= mu,]
+
+ggplot() +
+  geom_vline(xintercept = mu) +
+  geom_point(
+    data = data,
+    mapping = aes(wt, mpg)
+  ) +
+  geom_text_repel(
+    data = left,
+    mapping = aes(wt, mpg, label = rownames(left), colour = 'Left half'),
+    # Limit labels to the left of the vertical x=mu line
+    xlim = c(NA, mu)
+  ) +
+  geom_text_repel(
+    data = right,
+    mapping = aes(wt, mpg, label = rownames(right), colour = 'Right half'),
+    # Limit labels to the right of the vertical x=mu line
+    xlim = c(mu, NA)
+  ) +
+  theme_classic(base_size = 16)
+```
+
+### Limit the direction of label movement
+
+Use `direction` to limit label movement to the x-axis (left and right) or y-axis
+(up and down). The options are "both" (default), "x", or "y".
+
+```{r direction_x, echo=TRUE, fig.width=9, fig.height=7}
+set.seed(42)
+
+ggplot(mtcars) +
+  geom_point(aes(wt, mpg), color = 'red') +
+  geom_text_repel(aes(wt, mpg, label = rownames(mtcars)), direction = "x") +
+  theme_classic(base_size = 16) + xlim(1,6)
+```
+
+Setting `direction` to "y":
+
+```{r direction_y, echo=TRUE, fig.width=9, fig.height=7}
+set.seed(42)
+
+ggplot(mtcars) +
+  geom_point(aes(wt, mpg), color = 'red') +
+  geom_text_repel(aes(wt, mpg, label = rownames(mtcars)), direction = "y") +
+  theme_classic(base_size = 16)
 ```
 
 ### Line plot
@@ -236,8 +296,8 @@ ggplot(genes, aes(x = log2FoldChange, y = -log10(pvalue))) +
     data = subset(genes, padj < 0.05),
     aes(label = Gene),
     size = 5,
-    box.padding = unit(0.35, "lines"),
-    point.padding = unit(0.3, "lines")
+    box.padding = 0.25,
+    point.padding = 0.3
   )
 ggsave("figures/ggrepel/volcano-1.png", width = 12, height = 8, dpi = 84)
 ```
@@ -259,12 +319,48 @@ ggplot(mtcars, aes(x = wt, y = mpg, label = label)) +
     aes(
       color = factor(cyl)
     ),
-    point.padding = unit(0.25, "lines"),
-    box.padding = unit(0.25, "lines"),
+    point.padding = 0.25,
+    box.padding = 0.25,
     nudge_y = 0.1
   ) +
   theme_bw(base_size = 16)
 ```
+
+### Mathematical expressions
+
+```{r math, echo=TRUE, fig.width=12, fig.height=7}
+library(gridExtra)
+
+set.seed(0)
+d <- data.frame(
+  x = runif(30),
+  y = runif(30),
+  Parameter = c(
+    "prod(plain(P)(X == x), x)",
+    "integral(f(x) * dx, a, b)",
+    "lim(f(x), x %->% 0)",
+    rep("", 27)
+  )
+)
+
+p1 <- ggplot(d, aes(x, y, label = Parameter)) +
+  geom_point() +
+  geom_text_repel(
+    parse = TRUE, size = 8,
+    min.segment.length = 0,
+    point.padding = 0.5,
+    box.padding = 0.5
+  ) +
+  theme_classic(base_size = 20)
+
+p2 <- ggplot(d, aes(x, y, label = Parameter)) +
+  geom_point() +
+  geom_label_repel(parse = TRUE, size = 8, alpha = 0.5) +
+  theme_classic(base_size = 20)
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
 
 ### Animation
 
@@ -302,7 +398,7 @@ saveGIF(
 ## R Session Info
 
 ```{r session_info, echo=TRUE}
-sessionInfo()
+devtools::session_info()
 ```
 
 [geom_text]: http://docs.ggplot2.org/current/geom_text.html

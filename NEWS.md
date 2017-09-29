@@ -1,4 +1,92 @@
 
+ggrepel 0.7.0 2017-09-28
+----------------------------------------------------------------
+
+FIXES
+
+* Fix intersection between lines and rectangles, to reproduce the same
+  aesthetically pleasant behavior as in version 0.6.5. 
+  
+  This is an improvement on the sloppy implementation introduced in 0.6.8. See
+  [commit28633d] for more information.
+
+[commit28633d]: https://github.com/slowkow/ggrepel/commit/28633db5eb3d3cc2bd935bd438a8bb36b5673951
+
+ggrepel 0.6.12 2017-07-16
+----------------------------------------------------------------
+
+NEW FEATURE
+
+* Reproduce identical plots by usign `seed = 1` to set the seed in
+  `geom_text_repel()` or `geom_label_repel()`. By default, no seed will be set.
+  
+  This is an improvement on the sloppy implementation introduced in 0.6.2. See
+  issues [33] and [73] for more discussion of this feature. Thanks to Pierre
+  Gramme for reminding me about this via email.
+
+[33]: https://github.com/slowkow/ggrepel/issues/33
+[73]: https://github.com/slowkow/ggrepel/issues/73
+
+ggrepel 0.6.11 2017-07-08
+----------------------------------------------------------------
+
+CHANGES (thanks to @seaaan)
+
+* Allow certain arguments to be passed as numbers or `unit()`
+  instead of only units. See [issue 79][79].
+
+[79]: https://github.com/slowkow/ggrepel/issues/79
+
+ggrepel 0.6.10 2017-03-07
+----------------------------------------------------------------
+
+FIXES (thanks to @zkamvar)
+
+* Fix the crash for plots that do not specify `xlim` or `ylim`.
+  See [pull 74][74].
+
+[74]: https://github.com/slowkow/ggrepel/pull/74
+
+ggrepel 0.6.9 2017-03-07
+----------------------------------------------------------------
+
+FIXES (thanks to @pcroteau)
+
+* Fix the crash for plots with `facet_wrap` or `facet_grid` that have no
+  labeled points. See [pull 70][70].
+
+[70]: https://github.com/slowkow/ggrepel/pull/70
+
+ggrepel 0.6.8 2017-02-12
+----------------------------------------------------------------
+
+NEW FEATURE (thanks to @AliciaSchep)
+
+* Constrain repulsion force to x-axis "x" or y-axis "y" with `direction` in
+  `geom_text_repel()` and `geom_label_repel()`. See [pull 68][68].
+
+[68]: https://github.com/slowkow/ggrepel/pull/68
+
+ggrepel 0.6.7 2017-01-09
+----------------------------------------------------------------
+
+CHANGES (thanks to @lukauskas)
+
+* Constrain text labels to specific areas of the plot with `xlim` and `ylim` in
+  `geom_text_repel()` and `geom_label_repel()`. See [pull 67][67].
+
+[67]: https://github.com/slowkow/ggrepel/pull/67
+
+ggrepel 0.6.6 2016-11-28
+----------------------------------------------------------------
+
+FIXES (thanks to @fawda123)
+
+* Mathematical expressions as labels with `parse = TRUE` in 
+  `geom_text_repel()` and `geom_label_repel()`. See [issue 60][60].
+
+[60]: https://github.com/slowkow/ggrepel/issues/60
+
 ggrepel 0.6.5 2016-11-22
 ----------------------------------------------------------------
 

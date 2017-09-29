@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // euclid
 double euclid(NumericVector a, NumericVector b);
-RcppExport SEXP ggrepel_euclid(SEXP aSEXP, SEXP bSEXP) {
+RcppExport SEXP _ggrepel_euclid(SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,7 +19,7 @@ END_RCPP
 }
 // centroid
 NumericVector centroid(NumericVector b);
-RcppExport SEXP ggrepel_centroid(SEXP bSEXP) {
+RcppExport SEXP _ggrepel_centroid(SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -30,7 +30,7 @@ END_RCPP
 }
 // intersect_line_rectangle
 NumericVector intersect_line_rectangle(NumericVector p1, NumericVector p2, NumericVector b);
-RcppExport SEXP ggrepel_intersect_line_rectangle(SEXP p1SEXP, SEXP p2SEXP, SEXP bSEXP) {
+RcppExport SEXP _ggrepel_intersect_line_rectangle(SEXP p1SEXP, SEXP p2SEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -42,8 +42,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // repel_boxes
-DataFrame repel_boxes(NumericMatrix data_points, double point_padding_x, double point_padding_y, NumericMatrix boxes, NumericVector xlim, NumericVector ylim, double force, int maxiter);
-RcppExport SEXP ggrepel_repel_boxes(SEXP data_pointsSEXP, SEXP point_padding_xSEXP, SEXP point_padding_ySEXP, SEXP boxesSEXP, SEXP xlimSEXP, SEXP ylimSEXP, SEXP forceSEXP, SEXP maxiterSEXP) {
+DataFrame repel_boxes(NumericMatrix data_points, double point_padding_x, double point_padding_y, NumericMatrix boxes, NumericVector xlim, NumericVector ylim, double force, int maxiter, std::string direction);
+RcppExport SEXP _ggrepel_repel_boxes(SEXP data_pointsSEXP, SEXP point_padding_xSEXP, SEXP point_padding_ySEXP, SEXP boxesSEXP, SEXP xlimSEXP, SEXP ylimSEXP, SEXP forceSEXP, SEXP maxiterSEXP, SEXP directionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -55,7 +55,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type ylim(ylimSEXP);
     Rcpp::traits::input_parameter< double >::type force(forceSEXP);
     Rcpp::traits::input_parameter< int >::type maxiter(maxiterSEXP);
-    rcpp_result_gen = Rcpp::wrap(repel_boxes(data_points, point_padding_x, point_padding_y, boxes, xlim, ylim, force, maxiter));
+    Rcpp::traits::input_parameter< std::string >::type direction(directionSEXP);
+    rcpp_result_gen = Rcpp::wrap(repel_boxes(data_points, point_padding_x, point_padding_y, boxes, xlim, ylim, force, maxiter, direction));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_ggrepel_euclid", (DL_FUNC) &_ggrepel_euclid, 2},
+    {"_ggrepel_centroid", (DL_FUNC) &_ggrepel_centroid, 1},
+    {"_ggrepel_intersect_line_rectangle", (DL_FUNC) &_ggrepel_intersect_line_rectangle, 3},
+    {"_ggrepel_repel_boxes", (DL_FUNC) &_ggrepel_repel_boxes, 9},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_ggrepel(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

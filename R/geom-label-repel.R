@@ -1,29 +1,37 @@
 #' @rdname geom_text_repel
-#' @param label.padding Amount of padding around label. Defaults to 0.25 lines.
-#' @param label.r Radius of rounded corners. Defaults to 0.15 lines.
+#' @param label.padding Amount of padding around label, as unit or number.
+#'   Defaults to 0.25. (Default unit is lines, but other units can be specified
+#'   by passing \code{unit(x, "units")}).
+#' @param label.r Radius of rounded corners, as unit or number. Defaults
+#'   to 0.15. (Default unit is lines, but other units can be specified by
+#'   passing \code{unit(x, "units")}).
 #' @param label.size Size of label border, in mm.
 #' @export
 geom_label_repel <- function(
   mapping = NULL, data = NULL, stat = "identity",
   parse = FALSE,
   ...,
-  box.padding = unit(0.25, "lines"),
-  label.padding = unit(0.25, "lines"),
-  point.padding = unit(1e-6, "lines"),
-  label.r = unit(0.15, "lines"),
+  box.padding = 0.25,
+  label.padding = 0.25,
+  point.padding = 1e-6,
+  label.r = 0.15,
   label.size = 0.25,
   segment.colour = NULL,
   segment.color = NULL,
   segment.size = 0.5,
   segment.alpha = NULL,
-  min.segment.length = unit(0.5, "lines"),
+  min.segment.length = 0.5,
   arrow = NULL,
   force = 1,
   max.iter = 2000,
   nudge_x = 0,
   nudge_y = 0,
+  xlim = c(NA, NA),
+  ylim = c(NA, NA),
   na.rm = FALSE,
   show.legend = NA,
+  direction = c("both","y","x"),
+  seed = NA,
   inherit.aes = TRUE
 ) {
   layer(
@@ -36,21 +44,25 @@ geom_label_repel <- function(
     inherit.aes = inherit.aes,
     params = list(
       parse = parse,
-      box.padding  = box.padding,
-      label.padding = label.padding,
-      point.padding  = point.padding,
-      label.r = label.r,
+      box.padding  = to_unit(box.padding),
+      label.padding = to_unit(label.padding),
+      point.padding  = to_unit(point.padding),
+      label.r = to_unit(label.r),
       label.size = label.size,
       segment.colour = segment.color %||% segment.colour,
       segment.size = segment.size,
       segment.alpha = segment.alpha,
-      min.segment.length = min.segment.length,
+      min.segment.length = to_unit(min.segment.length),
       arrow = arrow,
       na.rm = na.rm,
       force = force,
       max.iter = max.iter,
       nudge_x = nudge_x,
       nudge_y = nudge_y,
+      xlim = xlim,
+      ylim = ylim,
+      direction = match.arg(direction),
+      seed = seed,
       ...
     )
   )
@@ -74,24 +86,31 @@ GeomLabelRepel <- ggproto(
     self, data, panel_scales, coord,
     parse = FALSE,
     na.rm = FALSE,
-    box.padding = unit(0.25, "lines"),
-    label.padding = unit(0.25, "lines"),
-    point.padding = unit(1e-6, "lines"),
-    label.r = unit(0.15, "lines"),
+    box.padding = 0.25,
+    label.padding = 0.25,
+    point.padding = 1e-6,
+    label.r = 0.15,
     label.size = 0.25,
     segment.colour = NULL,
     segment.size = 0.5,
     segment.alpha = NULL,
-    min.segment.length = unit(0.5, "lines"),
+    min.segment.length = 0.5,
     arrow = NULL,
     force = 1,
     nudge_x = 0,
     nudge_y = 0,
-    max.iter = 2000
+    xlim = c(NA, NA),
+    ylim = c(NA, NA),
+    max.iter = 2000,
+    direction = "both",
+    seed = NA
   ) {
     lab <- data$label
     if (parse) {
       lab <- parse(text = as.character(lab))
+    }
+    if (!length(which(not_empty(lab)))) {
+      return()
     }
 
     # Transform the nudges to the panel scales.
@@ -108,23 +127,33 @@ GeomLabelRepel <- ggproto(
     nudges$x <- nudges$x - data$x
     nudges$y <- nudges$y - data$y
 
+    # Transform limits to panel scales.
+    limits <- data.frame(x = xlim, y = ylim)
+    limits <- coord$transform(limits, panel_scales)
+
+    # Fill NAs with defaults.
+    limits$x[is.na(limits$x)] <- c(0, 1)[is.na(limits$x)]
+    limits$y[is.na(limits$y)] <- c(0, 1)[is.na(limits$y)]
+
     ggname("geom_label_repel", gTree(
-      limits = data.frame(x = c(0, 1), y = c(0, 1)),
+      limits = limits,
       data = data,
       lab = lab,
       nudges = nudges,
-      box.padding = box.padding,
-      label.padding = label.padding,
-      point.padding = point.padding,
-      label.r = label.r,
+      box.padding = to_unit(box.padding),
+      label.padding = to_unit(label.padding),
+      point.padding = to_unit(point.padding),
+      label.r = to_unit(label.r),
       label.size = label.size,
       segment.colour = segment.colour,
       segment.size = segment.size,
       segment.alpha = segment.alpha,
-      min.segment.length = min.segment.length,
+      min.segment.length = to_unit(min.segment.length),
       arrow = arrow,
       force = force,
       max.iter = max.iter,
+      direction = direction,
+      seed = seed,
       cl = "labelrepeltree"
     ))
   },
@@ -147,7 +176,7 @@ makeContent.labelrepeltree <- function(x) {
   point_padding_y <- convertHeight(x$point.padding, "native", valueOnly = TRUE)
 
   # Do not create text labels for empty strings.
-  valid_strings <- which(x$lab != "")
+  valid_strings <- which(not_empty(x$lab))
 
   # Create a dataframe with x y width height
   boxes <- lapply(valid_strings, function(i) {
@@ -186,8 +215,12 @@ makeContent.labelrepeltree <- function(x) {
     )
   })
 
+  # Make the repulsion reproducible if desired.
+  if (is.null(x$seed) || !is.na(x$seed)) {
+      set.seed(x$seed)
+  }
+
   # Repel overlapping bounding boxes away from each other.
-  set.seed(stats::rnorm(1))
   repel <- repel_boxes(
     data_points = cbind(x$data$x, x$data$y),
     point_padding_x = point_padding_x,
@@ -196,7 +229,8 @@ makeContent.labelrepeltree <- function(x) {
     xlim = range(x$limits$x),
     ylim = range(x$limits$y),
     force = x$force * 1e-6,
-    maxiter = x$max.iter
+    maxiter = x$max.iter,
+    direction = x$direction
   )
 
   grobs <- lapply(seq_along(valid_strings), function(i) {
@@ -245,9 +279,9 @@ labelRepelGrob <- function(
   y.orig = unit(0.5, "npc"),
   default.units = "npc",
   just = "center",
-  box.padding = unit(0.25, "lines"),
-  label.padding = unit(0.25, "lines"),
-  point.padding = unit(1e-6, "lines"),
+  box.padding = 0.25,
+  label.padding = 0.25,
+  point.padding = 1e-6,
   name = NULL,
   text.gp = gpar(),
   rect.gp = gpar(fill = "white"),
@@ -255,7 +289,7 @@ labelRepelGrob <- function(
   segment.gp = gpar(),
   vp = NULL,
   arrow = NULL,
-  min.segment.length = unit(0.5, "lines")
+  min.segment.length = 0.5
 ) {
   stopifnot(length(label) == 1)
 
