@@ -1,55 +1,55 @@
-# ggrepel
+ggrepel <img src="tools/logo.svg" width="120px" align="right" />
+============================================
 
-[![Build Status](https://travis-ci.org/slowkow/ggrepel.svg?branch=master)](https://travis-ci.org/slowkow/ggrepel)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/ggrepel)](https://CRAN.R-project.org/package=ggrepel)
-[![CRAN_Downloads_Badge](http://cranlogs.r-pkg.org/badges/grand-total/ggrepel?color=brightgreen)](http://cranlogs.r-pkg.org/downloads/total/last-month/ggrepel)
+[![Build Status][bb]][travis] [![CRAN_Status_Badge][cb]][cran] [![CRAN_Downloads_Badge][db]][r-pkg]
 
-`ggrepel` provides geoms for [ggplot2] to repel overlapping text labels.
+[bb]: https://travis-ci.org/slowkow/ggrepel.svg?branch=master
+[travis]: https://travis-ci.org/slowkow/ggrepel
+
+[cb]: http://www.r-pkg.org/badges/version/ggrepel?color=blue
+[cran]: https://CRAN.R-project.org/package=ggrepel
+
+[db]: http://cranlogs.r-pkg.org/badges/grand-total/ggrepel?color=blue
+[r-pkg]: https://www.r-pkg.org/pkg/ggrepel
+
+Overview
+--------
+
+ggrepel provides geoms for [ggplot2] to repel overlapping text labels:
+
+- `geom_text_repel()`
+- `geom_label_repel()`
+
+Text labels repel away from each other, away from data points, and away
+from edges of the plotting area.
 
 ```r
-library(ggplot2)
 library(ggrepel)
-ggplot(mtcars, aes(wt, mpg)) +
+ggplot(mtcars, aes(wt, mpg, label = rownames(mtcars))) +
+  geom_text_repel() +
   geom_point(color = 'red') +
-  geom_text_repel(aes(label = rownames(mtcars))) +
   theme_classic(base_size = 16)
 ```
 
-![geom_text_repel](https://github.com/slowkow/ggrepel/blob/master/vignettes/figures/ggrepel/geom_text_repel-1.png) 
+<img width="80%" src="tools/fig.png" />
 
-## Usage
-
-See the [vignette] for more usage examples.
-
-Also, look at the help pages:
+Installation
+------------
 
 ```r
-?geom_text_repel
-?geom_label_repel
-```
-
-## Installation
-
-Install the latest stable release from CRAN:
-
-```r
+# The easiest way to get ggrepel is to install it from CRAN:
 install.packages("ggrepel")
-```
 
-Alternatively, install the latest development version from github:
-
-```r
-install.packages("devtools")
+# Or get the the development version from GitHub:
+# install.packages("devtools")
 devtools::install_github("slowkow/ggrepel")
+
+# Or use the install-github.me service
+source("https://install-github.me/slowkow/ggrepel")
 ```
 
-Or install a tagged version:
-
-```r
-devtools::install_github("slowkow/ggrepel@0.6.2")
-```
-
-## Contributing
+Contributing
+------------
 
 Please [submit an issue][issues] to report bugs or ask questions.
 
@@ -59,16 +59,49 @@ repository.
 [issues]: https://github.com/slowkow/ggrepel/issues
 [pull]: https://help.github.com/articles/using-pull-requests/
 
-## Related work
+Related work
+------------
+
+### Academic Papers
+
+[An Efficient Algorithm for Scatter Chart Labeling][aaai]
+
+Sebastian Theophil, Arno Schödl
+
+> This paper presents an efficient algorithm for a new variation of the point
+> feature labeling problem. The goal is to position the largest number of point
+> labels such that they do not intersect each other or their points. First we
+> present an algorithm using a greedy algorithm with limited lookahead. We then
+> present an algorithm that iteratively regroups labels, calling the first
+> algorithm on each group, thereby identifying a close to optimal labeling
+> order. The presented algorithm is being used in a commercial product to label
+> charts, and our evaluation shows that it produces results far superior to
+> those of other labeling algorithms.
+
+This might be a good start for a revision of ggrepel.
+
+[aaai]: http://www.aaai.org/Papers/AAAI/2006/AAAI06-167.pdf
+
+### Python
+
+[adjustText]
+
+> A small library for automatically adjusting text position in matplotlib plots to minimize overlaps.
+
+Ilya Flyamer's Python library that extends [matplotlib].
+
+[adjustText]: https://github.com/Phlya/adjustText
+[matplotlib]: https://matplotlib.org/
+
+### R
 
 [directlabels]
 
-> This package is an attempt to make direct labeling a reality in everyday
-> statistical practice by making available a body of useful functions that
-> make direct labeling of common plots easy to do with high-level plotting
-> systems such as lattice and ggplot2. The main function that the package
-> provides is direct.label(p), which takes a lattice or ggplot2 plot p and
-> adds direct labels.
+> An extensible framework for automatically placing direct labels onto
+> multicolor 'lattice' or 'ggplot2' plots. Label positions are described
+> using Positioning Methods which can be re-used across several different
+> plots. There are heuristics for examining "trellis" and "ggplot" objects
+> and inferring an appropriate Positioning Method.
 
 [wordcloud]
 
@@ -90,10 +123,8 @@ packages with `ggplot2`.
 
 [1]: https://gist.github.com/slowkow/003b4d9f3f59cee8551c
 
-
 [ggplot2]: http://ggplot2.tidyverse.org
 [vignette]: https://github.com/slowkow/ggrepel/blob/master/vignettes/ggrepel.md
 [directlabels]: https://cran.r-project.org/package=directlabels
 [wordcloud]: https://cran.r-project.org/package=wordcloud
 [FField]: https://cran.r-project.org/package=FField
-

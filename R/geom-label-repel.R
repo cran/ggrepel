@@ -8,7 +8,7 @@
 #' @param label.size Size of label border, in mm.
 #' @export
 geom_label_repel <- function(
-  mapping = NULL, data = NULL, stat = "identity",
+  mapping = NULL, data = NULL, stat = "identity", position = "identity",
   parse = FALSE,
   ...,
   box.padding = 0.25,
@@ -34,12 +34,18 @@ geom_label_repel <- function(
   seed = NA,
   inherit.aes = TRUE
 ) {
+  if (!missing(nudge_x) || !missing(nudge_y)) {
+    if (!missing(position)) {
+      stop("Specify either `position` or `nudge_x`/`nudge_y`", call. = FALSE)
+    }
+    #position <- position_nudge(nudge_x, nudge_y)
+  }
   layer(
     data = data,
     mapping = mapping,
     stat = stat,
     geom = GeomLabelRepel,
-    position = "identity",
+    position = position,
     show.legend = show.legend,
     inherit.aes = inherit.aes,
     params = list(
@@ -79,7 +85,8 @@ GeomLabelRepel <- ggproto(
 
   default_aes = aes(
     colour = "black", fill = "white", size = 3.88, angle = 0,
-    alpha = NA, family = "", fontface = 1, lineheight = 1.2
+    alpha = NA, family = "", fontface = 1, lineheight = 1.2,
+    hjust = 0.5, vjust = 0.5
   ),
 
   draw_panel = function(
@@ -135,6 +142,14 @@ GeomLabelRepel <- ggproto(
     limits$x[is.na(limits$x)] <- c(0, 1)[is.na(limits$x)]
     limits$y[is.na(limits$y)] <- c(0, 1)[is.na(limits$y)]
 
+    # Convert hjust and vjust to numeric if character
+    if (is.character(data$vjust)) {
+      data$vjust <- compute_just(data$vjust, data$y)
+    }
+    if (is.character(data$hjust)) {
+      data$hjust <- compute_just(data$hjust, data$x)
+    }
+
     ggname("geom_label_repel", gTree(
       limits = limits,
       data = data,
@@ -172,15 +187,21 @@ makeContent.labelrepeltree <- function(x) {
   box_padding_y <- convertHeight(x$box.padding, "npc", valueOnly = TRUE)
 
   # The padding around each point.
+  if (is.na(x$point.padding)) {
+    x$point.padding = unit(0, "lines")
+  }
   point_padding_x <- convertWidth(x$point.padding, "native", valueOnly = TRUE)
   point_padding_y <- convertHeight(x$point.padding, "native", valueOnly = TRUE)
 
   # Do not create text labels for empty strings.
   valid_strings <- which(not_empty(x$lab))
+  invalid_strings <- which(!not_empty(x$lab))
 
   # Create a dataframe with x y width height
   boxes <- lapply(valid_strings, function(i) {
     row <- x$data[i, , drop = FALSE]
+    hj <- x$data$hjust[i]
+    vj <- x$data$vjust[i]
     t <- textGrob(
       x$lab[i],
       unit(row$x, "native") + x$label.padding,
@@ -205,29 +226,36 @@ makeContent.labelrepeltree <- function(x) {
       ),
       name = "box"
     )
-    gw <- convertWidth(grobWidth(r), "native", TRUE) / 2
-    gh <- convertHeight(grobHeight(r), "native", TRUE) / 2
+    gw <- convertWidth(grobWidth(r), "native", TRUE)
+    gh <- convertHeight(grobHeight(r), "native", TRUE)
     c(
-      "x1" = row$x - gw - box_padding_x + x$nudges$x[i],
-      "y1" = row$y - gh - box_padding_y + x$nudges$y[i],
-      "x2" = row$x + gw + box_padding_x + x$nudges$x[i],
-      "y2" = row$y + gh + box_padding_y + x$nudges$y[i]
+      "x1" = row$x - gw * hj  - box_padding_x + x$nudges$x[i],
+      "y1" = row$y - gh * vj - box_padding_y + x$nudges$y[i],
+      "x2" = row$x + gw * (1 - hj) + box_padding_x + x$nudges$x[i],
+      "y2" = row$y + gh * (1 - vj) + box_padding_y + x$nudges$y[i]
     )
-  })
+    })
 
   # Make the repulsion reproducible if desired.
   if (is.null(x$seed) || !is.na(x$seed)) {
       set.seed(x$seed)
   }
 
+  points_valid_first <- cbind(c(x$data$x[valid_strings],
+                                x$data$x[invalid_strings]),
+                              c(x$data$y[valid_strings],
+                                x$data$y[invalid_strings]))
+
   # Repel overlapping bounding boxes away from each other.
   repel <- repel_boxes(
-    data_points = cbind(x$data$x, x$data$y),
+    data_points = points_valid_first,
     point_padding_x = point_padding_x,
     point_padding_y = point_padding_y,
     boxes = do.call(rbind, boxes),
     xlim = range(x$limits$x),
     ylim = range(x$limits$y),
+    hjust = x$data$hjust,
+    vjust = x$data$vjust,
     force = x$force * 1e-6,
     maxiter = x$max.iter,
     direction = x$direction
@@ -263,7 +291,9 @@ makeContent.labelrepeltree <- function(x) {
         lwd = x$segment.size * .pt
       ),
       arrow = x$arrow,
-      min.segment.length = x$min.segment.length
+      min.segment.length = x$min.segment.length,
+      hjust = x$data$hjust[i],
+      vjust = x$data$vjust[i]
     )
   })
   class(grobs) <- "gList"
@@ -289,7 +319,9 @@ labelRepelGrob <- function(
   segment.gp = gpar(),
   vp = NULL,
   arrow = NULL,
-  min.segment.length = 0.5
+  min.segment.length = 0.5,
+  hjust = 0.5,
+  vjust = 0.5
 ) {
   stopifnot(length(label) == 1)
 
@@ -300,8 +332,10 @@ labelRepelGrob <- function(
 
   gTree(
     label = label,
+    # Position of text bounding boxes.
     x = x,
     y = y,
+    # Position of original data points.
     x.orig = x.orig,
     y.orig = y.orig,
     just = just,
@@ -316,7 +350,9 @@ labelRepelGrob <- function(
     vp = vp,
     cl = "labelrepelgrob",
     arrow = arrow,
-    min.segment.length = min.segment.length
+    min.segment.length = min.segment.length,
+    hjust = hjust,
+    vjust = vjust
   )
 }
 
@@ -360,12 +396,13 @@ makeContent.labelrepelgrob <- function(x) {
     convertHeight(x$y.orig, "native", TRUE)
   )
 
-  center <- centroid(c(x1, y1, x2, y2))
+  center <- centroid(c(x1, y1, x2, y2), x$hjust, x$vjust)
 
   # Get the coordinates of the intersection between the line from the
   # original data point to the centroid and the rectangle's edges.
   text_box <- c(x1, y1, x2, y2)
-  int <- intersect_line_rectangle(point_pos, center, c(x1, y1, x2, y2))
+  #int <- intersect_line_rectangle(point_pos, center, c(x1, y1, x2, y2))
+  int <- select_line_connection(point_pos, text_box)
 
   # Check if the data point is inside the label box.
   point_inside <- FALSE
