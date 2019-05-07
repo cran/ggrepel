@@ -1,16 +1,19 @@
 ggrepel <img src="tools/logo.svg" width="120px" align="right" />
 ============================================
 
-[![Build Status][bb]][travis] [![CRAN_Status_Badge][cb]][cran] [![CRAN_Downloads_Badge][db]][r-pkg]
-
-[bb]: https://travis-ci.org/slowkow/ggrepel.svg?branch=master
-[travis]: https://travis-ci.org/slowkow/ggrepel
+[![GitHub Version][gb]][releases] [![Build Status][bb]][travis] [![CRAN_Status_Badge][cb]][cran] [![CRAN_Downloads_Badge][db]][r-pkg]
 
 [cb]: http://www.r-pkg.org/badges/version/ggrepel?color=blue
 [cran]: https://CRAN.R-project.org/package=ggrepel
 
 [db]: http://cranlogs.r-pkg.org/badges/grand-total/ggrepel?color=blue
 [r-pkg]: https://www.r-pkg.org/pkg/ggrepel
+
+[gb]: https://badge.fury.io/gh/slowkow%2Fggrepel.svg?text=Github
+[releases]: https://github.com/slowkow/ggrepel/releases
+
+[bb]: https://travis-ci.org/slowkow/ggrepel.svg?branch=master
+[travis]: https://travis-ci.org/slowkow/ggrepel
 
 Overview
 --------
@@ -47,6 +50,13 @@ devtools::install_github("slowkow/ggrepel")
 # Or use the install-github.me service
 source("https://install-github.me/slowkow/ggrepel")
 ```
+
+Usage
+-----
+
+See the [vignette] for the code behind these examples:
+
+<a href="vignettes/ggrepel.md#hide-some-of-the-labels"><img style="margin:1rem;" width="30%" src="vignettes/figures/ggrepel/empty_string-1.png" /></a> <a href="vignettes/ggrepel.md#do-not-repel-labels-from-data-points"><img style="margin:1rem;" width="30%" src="vignettes/figures/ggrepel/point_padding_na-1.png" /></a> <a href="vignettes/ggrepel.md#align-text-labels"><img style="margin:1rem;" width="30%" src="vignettes/figures/ggrepel/direction_y-1.png" /></a> <a href="vignettes/ggrepel.md#limit-labels-to-a-specific-area"><img style="margin:1rem;" width="30%" src="vignettes/figures/ggrepel/xlim-1.png" /></a> <a href="vignettes/ggrepel.md#polar-coordinates"><img style="margin:1rem;" width="30%" src="vignettes/figures/ggrepel/polar-1.png" /></a> <a href="vignettes/ggrepel.md#mathematical-expressions"><img style="margin:1rem;" width="30%" src="vignettes/figures/ggrepel/math-1.png" /></a>
 
 Contributing
 ------------
