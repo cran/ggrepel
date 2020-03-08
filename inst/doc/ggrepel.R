@@ -27,7 +27,7 @@ theme_set(theme_classic(base_size = 18) %+replace% theme(
   axis.ticks = element_line(colour = "black", size = 0.2)
 ))
 
-## ----comparison, echo=TRUE, fig.width=9, fig.height=4--------------------
+## ----comparison, echo=TRUE, fig.width=9, fig.height=4-------------------------
 library(ggrepel)
 set.seed(42)
 
@@ -43,10 +43,10 @@ p2 <- p + geom_text_repel() + labs(title = "geom_text_repel()")
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)
 
-## ----install-cran, echo=TRUE, eval=FALSE---------------------------------
+## ----install-cran, echo=TRUE, eval=FALSE--------------------------------------
 #  install.packages("ggrepel")
 
-## ----install-github, echo=TRUE, eval=FALSE-------------------------------
+## ----install-github, echo=TRUE, eval=FALSE------------------------------------
 #  # Use the devtools package
 #  # install.packages("devtools")
 #  devtools::install_github("slowkow/ggrepel")
@@ -54,7 +54,7 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 #  # Or use the install-github.me service
 #  source("https://install-github.me/slowkow/ggrepel")
 
-## ----empty_string, echo=TRUE, fig.width=5, fig.height=4------------------
+## ----empty_string, echo=TRUE, fig.width=5, fig.height=4-----------------------
 set.seed(42)
 
 dat2 <- subset(mtcars, wt > 3 & wt < 4)
@@ -68,13 +68,13 @@ ggplot(dat2, aes(wt, mpg, label = car)) +
   geom_point(color = ifelse(dat2$car == "", "grey50", "red")) +
   geom_text_repel()
 
-## ----point_padding_na, echo=TRUE, fig.width=5, fig.height=4--------------
+## ----point_padding_na, echo=TRUE, fig.width=5, fig.height=4-------------------
 set.seed(42)
 ggplot(dat, aes(wt, mpg, label = car)) +
   geom_point(color = "red") +
   geom_text_repel(point.padding = NA)
 
-## ----xlim, echo=TRUE, fig.width=5, fig.height=4--------------------------
+## ----xlim, echo=TRUE, fig.width=5, fig.height=4-------------------------------
 set.seed(42)
 
 # All labels should be to the right of 3.
@@ -90,7 +90,7 @@ ggplot(dat, aes(wt, mpg, label = car, color = factor(cyl))) +
   ) +
   scale_color_discrete(name = "cyl")
 
-## ----direction_x, echo=TRUE, fig.width=9, fig.height=3-------------------
+## ----direction_x, echo=TRUE, fig.width=9, fig.height=3------------------------
 set.seed(42)
 
 ggplot(mtcars, aes(x = wt, y = 1, label = rownames(mtcars))) +
@@ -111,7 +111,7 @@ ggplot(mtcars, aes(x = wt, y = 1, label = rownames(mtcars))) +
     axis.title.y = element_blank()
   )
 
-## ----neat-offset-x, echo=TRUE, fig.width=7, fig.height=4-----------------
+## ----neat-offset-x, echo=TRUE, fig.width=7, fig.height=4----------------------
 set.seed(42)
 
 dat <- mtcars
@@ -129,7 +129,7 @@ ggplot(dat, aes(qsec, mpg, label = car)) +
   scale_x_continuous(expand = c(0.05, 0.05)) +
   scale_y_continuous(limits = c(NA, 36))
 
-## ----direction_y, echo=TRUE, fig.width=10, fig.height=8------------------
+## ----direction_y, echo=TRUE, fig.width=10, fig.height=8-----------------------
 set.seed(42)
 
 p <- ggplot(mtcars, aes(y = wt, x = 1, label = rownames(mtcars))) +
@@ -176,7 +176,7 @@ p3 <- p +
 
 gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
 
-## ----neat-offset-y, echo=TRUE, fig.width=7, fig.height=4-----------------
+## ----neat-offset-y, echo=TRUE, fig.width=7, fig.height=4----------------------
 set.seed(42)
 
 dat <- subset(mtcars, wt > 2.75 & wt < 3.45)
@@ -205,7 +205,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
   ) +
   geom_point(color = "red")
 
-## ----polar, echo=TRUE, fig.width=5, fig.height=4-------------------------
+## ----polar, echo=TRUE, fig.width=5, fig.height=4------------------------------
 set.seed(42)
 
 mtcars$label <- rownames(mtcars)
@@ -218,7 +218,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl), label = label)) +
   geom_text_repel(show.legend = FALSE) + # Don't display "a" in the legend.
   theme_bw(base_size = 18)
 
-## ----math, echo=TRUE, fig.width=5, fig.height=4--------------------------
+## ----math, echo=TRUE, fig.width=5, fig.height=4-------------------------------
 d <- data.frame(
   x    = c(1, 2, 2, 1.75, 1.25),
   y    = c(1, 3, 1, 2.65, 1.25),
@@ -239,7 +239,7 @@ ggplot(d, aes(x, y, label = math)) +
     box.padding = 2
   )
 
-## ----animated, echo=TRUE, eval=FALSE-------------------------------------
+## ----animated, echo=TRUE, eval=FALSE------------------------------------------
 #  # This chunk of code will take a minute or two to run.
 #  library(ggrepel)
 #  library(animation)
@@ -265,6 +265,6 @@ ggplot(d, aes(x, y, label = math)) +
 #    movie.name = "animated.gif"
 #  )
 
-## ----session_info, echo=TRUE---------------------------------------------
+## ----session_info, echo=TRUE--------------------------------------------------
 sessionInfo()
 

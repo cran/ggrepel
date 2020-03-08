@@ -1,3 +1,24 @@
+ggrepel 0.8.2 2019-11-08
+========================
+
+## Changes
+
+* Thanks to Paul Murrell (@pmur002) for notifying us to use `is.unit(x)`
+  instead of `class(x) == "unit"` in [issue 141]. This should future-proof
+  ggrepel for new versions of the grid package.
+
+[issue 141]: https://github.com/slowkow/ggrepel/issues/141
+
+ggrepel 0.8.1 2019-05-07
+========================
+
+## Bug fixes and improvements
+
+* Fix heap buffer overflow that causes R to crash. See [issue 115]. Thanks to
+  Brodie Gaslam (@brodieG) for helping me to setup an environment to reproduce
+  the bug on my own system.
+
+[issue 115]: https://github.com/slowkow/ggrepel/issues/115
 
 ggrepel 0.8.0 2018-05-09
 ========================
@@ -394,4 +415,4 @@ ggrepel 0.0.1 2016-01-04
 
 * Initial release to github.
 
-[vignette]: https://github.com/slowkow/ggrepel/blob/master/vignettes/ggrepel.md
+[vignette]: https://ggrepel.slowkow.com/articles/examples.html

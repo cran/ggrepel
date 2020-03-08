@@ -191,7 +191,7 @@ test_that("returns NA, not unit(NA, 'lines') when given NA in geom_label_repel",
   # returns TRUE even is unit(NA, "lines")
   expect_true(is.na(extract_param(p, "box.padding")))
   # returns TRUE for NA, but not unit(NA, "lines")
-  expect_true(class(extract_param(p, "box.padding")) != "unit")
+  expect_true(is.unit(extract_param(p, "box.padding")))
 })
 
 test_that("returns NA, not unit(NA, 'lines') when given NA in geom_text_repel", {
@@ -202,6 +202,6 @@ test_that("returns NA, not unit(NA, 'lines') when given NA in geom_text_repel", 
   # returns TRUE even is unit(NA, "lines")
   expect_true(is.na(extract_param(p, "box.padding")))
   # returns TRUE for NA, but not unit(NA, "lines")
-  expect_true(class(extract_param(p, "box.padding")) != "unit")
+  expect_true(is.unit(extract_param(p, "box.padding")))
 })
 
