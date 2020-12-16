@@ -5,22 +5,64 @@
 \alias{geom_text_repel}
 \title{Repulsive textual annotations.}
 \usage{
-geom_label_repel(mapping = NULL, data = NULL, stat = "identity",
-  position = "identity", parse = FALSE, ..., box.padding = 0.25,
-  label.padding = 0.25, point.padding = 1e-06, label.r = 0.15,
-  label.size = 0.25, segment.colour = NULL, segment.color = NULL,
-  segment.size = 0.5, segment.alpha = NULL, min.segment.length = 0.5,
-  arrow = NULL, force = 1, max.iter = 2000, nudge_x = 0, nudge_y = 0,
-  xlim = c(NA, NA), ylim = c(NA, NA), na.rm = FALSE, show.legend = NA,
-  direction = c("both", "y", "x"), seed = NA, inherit.aes = TRUE)
+geom_label_repel(
+  mapping = NULL,
+  data = NULL,
+  stat = "identity",
+  position = "identity",
+  parse = FALSE,
+  ...,
+  box.padding = 0.25,
+  label.padding = 0.25,
+  point.padding = 1e-06,
+  label.r = 0.15,
+  label.size = 0.25,
+  min.segment.length = 0.5,
+  arrow = NULL,
+  force = 1,
+  force_pull = 1,
+  max.time = 0.5,
+  max.iter = 10000,
+  max.overlaps = getOption("ggrepel.max.overlaps", default = 10),
+  nudge_x = 0,
+  nudge_y = 0,
+  xlim = c(NA, NA),
+  ylim = c(NA, NA),
+  na.rm = FALSE,
+  show.legend = NA,
+  direction = c("both", "y", "x"),
+  seed = NA,
+  verbose = FALSE,
+  inherit.aes = TRUE
+)
 
-geom_text_repel(mapping = NULL, data = NULL, stat = "identity",
-  position = "identity", parse = FALSE, ..., box.padding = 0.25,
-  point.padding = 1e-06, segment.colour = NULL, segment.color = NULL,
-  segment.size = 0.5, segment.alpha = NULL, min.segment.length = 0.5,
-  arrow = NULL, force = 1, max.iter = 2000, nudge_x = 0, nudge_y = 0,
-  xlim = c(NA, NA), ylim = c(NA, NA), na.rm = FALSE, show.legend = NA,
-  direction = c("both", "y", "x"), seed = NA, inherit.aes = TRUE)
+geom_text_repel(
+  mapping = NULL,
+  data = NULL,
+  stat = "identity",
+  position = "identity",
+  parse = FALSE,
+  ...,
+  box.padding = 0.25,
+  point.padding = 1e-06,
+  min.segment.length = 0.5,
+  arrow = NULL,
+  force = 1,
+  force_pull = 1,
+  max.time = 0.5,
+  max.iter = 10000,
+  max.overlaps = getOption("ggrepel.max.overlaps", default = 10),
+  nudge_x = 0,
+  nudge_y = 0,
+  xlim = c(NA, NA),
+  ylim = c(NA, NA),
+  na.rm = FALSE,
+  show.legend = NA,
+  direction = c("both", "y", "x"),
+  seed = NA,
+  verbose = FALSE,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping}{Set of aesthetic mappings created by \code{\link[ggplot2]{aes}} or
@@ -70,16 +112,6 @@ passing \code{unit(x, "units")}).}
 
 \item{label.size}{Size of label border, in mm.}
 
-\item{segment.colour, segment.color}{Colour of the line segment. Defaults to the same colour
-as the text. In the unlikely event you specify both US and UK spellings of colour, the
-US spelling will take precedence.}
-
-\item{segment.size}{Width of line segment connecting the data point to
-the text label, in mm.}
-
-\item{segment.alpha}{Transparency of the line segment. Defaults to the same
-transparency as the text.}
-
 \item{min.segment.length}{Skip drawing segments shorter than this, as unit or
 number. Defaults to 0.5. (Default unit is lines, but other units can be
 specified by passing \code{unit(x, "units")}).}
@@ -89,8 +121,17 @@ specified by passing \code{unit(x, "units")}).}
 \item{force}{Force of repulsion between overlapping text labels. Defaults
 to 1.}
 
+\item{force_pull}{Force of attraction between a text label and its
+corresponding data point. Defaults to 1.}
+
+\item{max.time}{Maximum number of seconds to try to resolve overlaps.
+Defaults to 0.5.}
+
 \item{max.iter}{Maximum number of iterations to try to resolve overlaps.
-Defaults to 2000.}
+Defaults to 10000.}
+
+\item{max.overlaps}{Exclude text labels that overlap too many things.
+Defaults to 10.}
 
 \item{nudge_x, nudge_y}{Horizontal and vertical adjustments to nudge the
 starting position of each text label.}
@@ -110,6 +151,8 @@ a warning.  If \code{TRUE} silently removes missing values.}
 
 \item{seed}{Random seed passed to \code{\link[base]{set.seed}}. Defaults to
 \code{NA}, which means that \code{set.seed} will not be called.}
+
+\item{verbose}{If \code{TRUE}, some diagnostics of the repel algorithm are printed}
 
 \item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics,
 rather than combining with them. This is most useful for helper functions

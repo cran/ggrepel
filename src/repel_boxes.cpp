@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <Rcpp/Benchmark/Timer.h>
 #include <deque>
 using namespace Rcpp;
 
@@ -25,7 +26,61 @@ NumericVector centroid(NumericVector b, double hjust, double vjust) {
   return NumericVector::create(b[0] + (b[2] - b[0]) * hjust, b[1] + (b[3] - b[1]) * vjust);
 }
 
+//' Find the intersections between a line and a rectangle.
+//' @param c A circle like \code{c(x, y, r)}
+//' @param r A rectangle like \code{c(x1, y1, x2, y2)}
+//' @noRd
+// [[Rcpp::export]]
+bool intersect_circle_rectangle(NumericVector c, NumericVector r) {
+  // Center of the circle.
+  double c_x = c[0];
+  double c_radius = c[2];
+  // Center of the rectangle.
+  double r_x = (r[2] + r[0]) / 2;
+  double r_halfwidth = std::abs(r[0] - r_x);
+  // Distance between centers.
+  double cx = std::abs(c_x - r_x);
+  double xDist = r_halfwidth + c_radius;
+  if (cx > xDist) {
+    return false;
+  }
+  // Center of the circle.
+  double c_y = c[1];
+  // Center of the rectangle.
+  double r_y = (r[3] + r[1]) / 2;
+  double r_halfheight = std::abs(r[1] - r_y);
+  // Distance between centers.
+  double cy = std::abs(c_y - r_y);
+  double yDist = r_halfheight + c_radius;
+  if (cy > yDist) {
+    return false;
+  }
+  if (cx <= r_halfwidth || cy <= r_halfheight)
+    return true;
+  double xCornerDist = cx - r_halfwidth;
+  double yCornerDist = cy - r_halfheight;
+  double xCornerDistSq = xCornerDist * xCornerDist;
+  double yCornerDistSq = yCornerDist * yCornerDist;
+  double maxCornerDistSq = c_radius * c_radius;
+  return xCornerDistSq + yCornerDistSq <= maxCornerDistSq;
+}
 
+//' Find the intersection between a line and a circle.
+//' @param p1 A point on the line like \code{c(x, y)}
+//' @param p2 A point at the circle's center
+//' @param r The circle's radius
+//' @noRd
+// [[Rcpp::export]]
+NumericVector intersect_line_circle(
+    NumericVector p1, NumericVector p2, double r
+) {
+  // 0 = x, 1 = y
+  double theta = std::atan2(p1[1] - p2[1], p1[0] - p2[0]);
+  return NumericVector::create(
+      p2[0] + r * std::cos(theta),
+      p2[1] + r * std::sin(theta)
+  );
+}
 
 //' Find the intersections between a line and a rectangle.
 //' @param p1 A point like \code{c(x, y)}
@@ -227,6 +282,15 @@ Box operator +(const Box& b, const Point& p) {
   return c;
 }
 
+typedef struct {
+  double x, y, r;
+} Circle;
+
+Circle operator +(const Circle& b, const Point& p) {
+  Circle c = {b.x + p.x, b.y + p.y, b.r};
+  return c;
+}
+
 //' Euclidean distance between two points.
 //' @param a A point.
 //' @param b A point.
@@ -251,7 +315,6 @@ double euclid2(Point a, Point b) {
 bool approximately_equal(double x1, double x2) {
   return std::abs(x2 - x1) < (std::numeric_limits<double>::epsilon() * 100);
 }
-
 
 bool line_intersect(Point p1, Point q1, Point p2, Point q2) {
 
@@ -384,7 +447,44 @@ bool overlaps(Box a, Box b) {
     b.y2 >= a.y1;
 }
 
-
+//' Test if a box overlaps another box.
+//' @param a A box like \code{c(x1, y1, x2, y2)}
+//' @param b A box like \code{c(x1, y1, x2, y2)}
+//' @noRd
+bool overlaps(Circle c, Box r) {
+  // Center of the circle.
+  double c_x = c.x;
+  double c_radius = c.r;
+  // Center of the rectangle.
+  double r_x = (r.x1 + r.x2) / 2;
+  double r_halfwidth = std::abs(r.x1 - r_x);
+  // Distance between centers.
+  double cx = std::abs(c_x - r_x);
+  double xDist = r_halfwidth + c_radius;
+  if (cx > xDist) {
+    return false;
+  }
+  // Center of the circle.
+  double c_y = c.y;
+  // Center of the rectangle.
+  double r_y = (r.y1 + r.y2) / 2;
+  double r_halfheight = std::abs(r.y1 - r_y);
+  // Distance between centers.
+  double cy = std::abs(c_y - r_y);
+  double yDist = r_halfheight + c_radius;
+  if (cy > yDist) {
+    return false;
+  }
+  if (cx <= r_halfwidth || cy <= r_halfheight) {
+    return true;
+  }
+  double xCornerDist = cx - r_halfwidth;
+  double yCornerDist = cy - r_halfheight;
+  double xCornerDistSq = xCornerDist * xCornerDist;
+  double yCornerDistSq = yCornerDist * yCornerDist;
+  double maxCornerDistSq = c_radius * c_radius;
+  return xCornerDistSq + yCornerDistSq <= maxCornerDistSq;
+}
 
 Point repel_force_both(
     Point a, Point b, double force = 0.000001
@@ -519,9 +619,19 @@ Point spring_force(
   return out;
 }
 
+std::vector<double> rescale(std::vector<double> v) {
+  double min_value = *std::min_element(v.begin(), v.end());
+  double max_value = *std::max_element(v.begin(), v.end());
+  for (int i = 0; i < v.size(); i++) {
+    v[i] = (v[i] - min_value) / max_value;
+  }
+  return v;
+}
+
 //' Adjust the layout of a list of potentially overlapping boxes.
 //' @param data_points A numeric matrix with rows representing points like
 //'   \code{rbind(c(x, y), c(x, y), ...)}
+//' @param point_size A numeric vector representing the sizes of data points.
 //' @param point_padding_x Padding around each data point on the x axis.
 //' @param point_padding_y Padding around each data point on the y axis.
 //' @param boxes A numeric matrix with rows representing boxes like
@@ -531,28 +641,38 @@ Point spring_force(
 //' @param ylim A numeric vector representing the limits on the y axis like
 //'   \code{c(ymin, ymax)}
 //' @param force Magnitude of the force (defaults to \code{1e-6})
-//' @param maxiter Maximum number of iterations to try to resolve overlaps
+//' @param max_time Maximum number of seconds to try to resolve overlaps
+//'   (defaults to 0.1)
+//' @param max_iter Maximum number of iterations to try to resolve overlaps
 //'   (defaults to 2000)
 //' @noRd
 // [[Rcpp::export]]
-DataFrame repel_boxes(
+DataFrame repel_boxes2(
     NumericMatrix data_points,
+    NumericVector point_size,
     double point_padding_x, double point_padding_y,
     NumericMatrix boxes,
     NumericVector xlim, NumericVector ylim,
     NumericVector hjust, NumericVector vjust,
-    double force = 1e-6, int maxiter = 2000,
-    std::string direction = "both"
+    double force_push = 1e-7,
+    double force_pull = 1e-7,
+    double max_time = 0.1,
+    double max_overlaps = 10,
+    int max_iter = 2000,
+    std::string direction = "both",
+    int verbose = 0
 ) {
   int n_points = data_points.nrow();
   int n_texts = boxes.nrow();
-  // assert(n_points >= n_texts);
-  int iter = 0;
-  bool any_overlaps = true;
-  bool i_overlaps = true;
 
-  if (NumericVector::is_na(force)) {
-    force = 1e-6;
+  // Larger data points push text away with greater force.
+  double force_point_size = 100.0;
+
+  if (NumericVector::is_na(force_push)) {
+    force_push = 1e-6;
+  }
+  if (NumericVector::is_na(force_pull)) {
+    force_pull = 1e-6;
   }
 
   Point xbounds, ybounds;
@@ -561,31 +681,28 @@ DataFrame repel_boxes(
   ybounds.x = ylim[0];
   ybounds.y = ylim[1];
 
-  // Each data point gets a bounding box.
-  std::vector<Box> DataBoxes(n_points);
-  for (int i = 0; i < n_points; i++) {
-    DataBoxes[i].x1 = data_points(i, 0) - point_padding_x;
-    DataBoxes[i].y1 = data_points(i, 1) - point_padding_y;
-    DataBoxes[i].x2 = data_points(i, 0) + point_padding_x;
-    DataBoxes[i].y2 = data_points(i, 1) + point_padding_y;
-  }
-
+  // Each data point gets a bounding circle.
   std::vector<Point> Points(n_points);
+  std::vector<Circle> DataCircles(n_points);
   for (int i = 0; i < n_points; i++) {
+    DataCircles[i].x = data_points(i, 0);
+    DataCircles[i].y = data_points(i, 1);
+    DataCircles[i].r = point_size[i] + (point_padding_x + point_padding_y) / 4.0;
     Points[i].x = data_points(i, 0);
     Points[i].y = data_points(i, 1);
   }
 
   // Add a tiny bit of jitter to each text box at the start.
-  NumericVector r = rnorm(n_texts, 0, force);
+  NumericVector r = rnorm(n_texts, 0, force_push);
   std::vector<Box> TextBoxes(n_texts);
-  std::vector<double> ratios(n_texts);
   std::vector<Point> original_centroids(n_texts);
+  std::vector<double> TextBoxWidths(n_texts);
   for (int i = 0; i < n_texts; i++) {
     TextBoxes[i].x1 = boxes(i, 0);
     TextBoxes[i].x2 = boxes(i, 2);
     TextBoxes[i].y1 = boxes(i, 1);
     TextBoxes[i].y2 = boxes(i, 3);
+    TextBoxWidths[i] = std::abs(TextBoxes[i].x2 - TextBoxes[i].x1);
     // Don't add jitter if the user wants to repel in just one direction.
     if (direction != "y") {
       TextBoxes[i].x1 += r[i];
@@ -595,19 +712,73 @@ DataFrame repel_boxes(
       TextBoxes[i].y1 += r[i];
       TextBoxes[i].y2 += r[i];
     }
-    // height over width
-    ratios[i] = (TextBoxes[i].y2 - TextBoxes[i].y1)
-      / (TextBoxes[i].x2 - TextBoxes[i].x1);
     original_centroids[i] = centroid(TextBoxes[i], hjust[i], vjust[i]);
   }
 
+  // Rescale to be in the range [0,1]
+  TextBoxWidths = rescale(TextBoxWidths);
+  // for (int i = 0; i < n_texts; i++) {
+  //   Rcout << "[" << i << "] = " << TextBoxWidths[i] << "; ";
+  // }
+  // Rcout << std::endl;
+
+  std::vector<Point> velocities(n_texts);
+  double velocity_decay = 0.7;
+
   Point f, ci, cj;
 
-  while (any_overlaps && iter < maxiter) {
+  //Timer timer;
+  //timer.step("start");
+
+  nanotime_t start_time = get_nanotime();
+  nanotime_t elapsed_time = 0;
+  // convert to nanoseconds
+  max_time *= 1e9;
+
+  std::vector<double> total_overlaps(n_texts, 0);
+  std::vector<bool> too_many_overlaps(n_texts, false);
+
+  int iter = 0;
+  int n_overlaps = 1;
+  int p_overlaps = 1;
+  bool i_overlaps = true;
+
+  while (n_overlaps && iter < max_iter) {
     iter += 1;
-    any_overlaps = false;
+    p_overlaps = n_overlaps;
+    n_overlaps = 0;
+
+    // Maximum time limit.
+    if (iter % 10 == 0) {
+      elapsed_time = get_nanotime() - start_time;
+      // Stop trying to layout the text after some time.
+      if (elapsed_time > max_time) {
+        break;
+      }
+    }
+
+    // The forces get weaker over time.
+    force_push *= 0.99999;
+    force_pull *= 0.9999;
+    // velocity_decay *= 0.999;
 
     for (int i = 0; i < n_texts; i++) {
+      if (iter == 2 && total_overlaps[i] > max_overlaps) {
+        too_many_overlaps[i] = true;
+      }
+      // if (iter == 2) {
+      //   // for (int i = 0; i < n_texts; i++) {
+      //   Rcout << "total_overlaps[" << i << "] = " << total_overlaps[i] << "; ";
+      //   // }
+      //   Rcout << std::endl;
+      // }
+      if (too_many_overlaps[i]) {
+        continue;
+      }
+
+      // Reset overlaps for the next iteration
+      total_overlaps[i] = 0;
+
       i_overlaps = false;
       f.x = 0;
       f.y = 0;
@@ -617,58 +788,99 @@ DataFrame repel_boxes(
       for (int j = 0; j < n_points; j++) {
 
         if (i == j) {
-          // Skip the data points if the padding is 0.
-          if (point_padding_x == 0 && point_padding_y == 0) {
+          // Skip the data points if the size and padding is 0.
+          if (point_size[i] == 0 && point_padding_x == 0 && point_padding_y == 0) {
             continue;
           }
           // Repel the box from its data point.
-          if (overlaps(DataBoxes[i], TextBoxes[i])) {
-            any_overlaps = true;
+          if (overlaps(DataCircles[i], TextBoxes[i])) {
+            n_overlaps += 1;
             i_overlaps = true;
-            f = f + repel_force(ci, Points[i], force, direction);
+            total_overlaps[i] += 1;
+            f = f + repel_force(
+              ci, Points[i],
+              // force_push,
+              point_size[i] * force_point_size * force_push,
+              direction
+            );
           }
-        } else {
-          // Repel the box from overlapping boxes.
-          if (j < n_texts && overlaps(TextBoxes[i], TextBoxes[j])) {
-            cj = centroid(TextBoxes[j], hjust[j], vjust[j]);
-            any_overlaps = true;
-            i_overlaps = true;
-            f = f + repel_force(ci, cj, force * 3, direction);
-          }
-
-          // Skip the data points if the padding is 0.
-          if (point_padding_x == 0 && point_padding_y == 0) {
+        } else if (too_many_overlaps[j]) {
+          // Skip the data points if the size and padding is 0.
+          if (point_size[j] == 0 && point_padding_x == 0 && point_padding_y == 0) {
             continue;
           }
           // Repel the box from other data points.
-          if (overlaps(DataBoxes[j], TextBoxes[i])) {
-            any_overlaps = true;
+          if (overlaps(DataCircles[j], TextBoxes[i])) {
+            n_overlaps += 1;
             i_overlaps = true;
-            f = f + repel_force(ci, Points[j], force, direction);
+            total_overlaps[i] += 1;
+            f = f + repel_force(
+              ci, Points[j],
+              // force_push,
+              point_size[i] * force_point_size * force_push,
+              direction
+            );
+          }
+        } else {
+          cj = centroid(TextBoxes[j], hjust[j], vjust[j]);
+          // Repel the box from overlapping boxes.
+          if (j < n_texts && overlaps(TextBoxes[i], TextBoxes[j])) {
+            n_overlaps += 1;
+            i_overlaps = true;
+            total_overlaps[i] += 1;
+            f = f + repel_force(ci, cj, force_push, direction);
+          }
+
+          // Skip the data points if the size and padding is 0.
+          if (point_size[j] == 0 && point_padding_x == 0 && point_padding_y == 0) {
+            continue;
+          }
+          // Repel the box from other data points.
+          if (overlaps(DataCircles[j], TextBoxes[i])) {
+            n_overlaps += 1;
+            i_overlaps = true;
+            total_overlaps[i] += 1;
+            f = f + repel_force(
+              ci, Points[j],
+              // force_push,
+              point_size[i] * force_point_size * force_push,
+              direction
+            );
           }
         }
       }
 
       // Pull the box toward its original position.
       if (!i_overlaps) {
-        f = f + spring_force(original_centroids[i], ci, force * 2e3, direction);
+        // force_pull *= 0.999;
+        f = f + spring_force(
+            original_centroids[i], ci, force_pull, direction);
       }
 
-      TextBoxes[i] = TextBoxes[i] + f;
+      double overlap_multiplier = 1.0;
+      if (total_overlaps[i] > 10) {
+        overlap_multiplier += 0.5;
+      } else {
+        overlap_multiplier += 0.05 * total_overlaps[i];
+      }
+
+      velocities[i] = overlap_multiplier * velocities[i] * (TextBoxWidths[i] + 1e-6) * velocity_decay + f;
+      // velocities[i] = velocities[i] * velocity_decay + f;
+      TextBoxes[i] = TextBoxes[i] + velocities[i];
       // Put boxes within bounds
       TextBoxes[i] = put_within_bounds(TextBoxes[i], xbounds, ybounds);
 
       // look for line clashes
-      if (!any_overlaps || iter % 5 == 0) {
-        for (int j = 0; j < n_texts; j++) {
+      if (n_overlaps == 0 || iter % 5 == 0) {
+        for (int j = 0; j < n_points; j++) {
           cj = centroid(TextBoxes[j], hjust[j], vjust[j]);
           ci = centroid(TextBoxes[i], hjust[i], vjust[i]);
           // Switch label positions if lines overlap
           if (
-            i != j &&
+            i != j && j < n_texts &&
             line_intersect(ci, Points[i], cj, Points[j])
           ) {
-            any_overlaps = true;
+            n_overlaps += 1;
             TextBoxes[i] = TextBoxes[i] + spring_force(cj, ci, 1, direction);
             TextBoxes[j] = TextBoxes[j] + spring_force(ci, cj, 1, direction);
             // Check if resolved
@@ -684,12 +896,34 @@ DataFrame repel_boxes(
           }
         }
       }
-
-      // Dampen force after each iteration.
-      // force = force * 0.9999;
-
     } // loop through all text labels
   } // while any overlaps exist and we haven't reached max iterations
+
+  if (verbose) {
+    if (elapsed_time > max_time) {
+      Rprintf(
+        "%.2fs elapsed for %d iterations, %d overlaps. Consider increasing 'max.time'.\n",
+        max_time / 1e9, iter, p_overlaps
+      );
+    } else if (iter >= max_iter) {
+      Rprintf(
+        "%d iterations in %.2fs, %d overlaps. Consider increasing 'max.iter'.\n",
+        max_iter, elapsed_time / 1e9, p_overlaps
+      );
+    } else {
+      Rprintf(
+        "text repel complete in %d iterations (%.2fs), %d overlaps\n",
+        iter, elapsed_time / 1e9, p_overlaps
+      );
+    }
+  }
+
+  //timer.step("end");
+  //NumericVector res(timer);
+  //for (int i = 0; i < res.size(); i++) {
+  //  res[i] = res[i] / 1000000;
+  //}
+  //Rcpp::Rcout << round(res[1] - res[0]) << " ms" << std::endl;
 
   NumericVector xs(n_texts);
   NumericVector ys(n_texts);
@@ -701,8 +935,7 @@ DataFrame repel_boxes(
 
   return Rcpp::DataFrame::create(
     Rcpp::Named("x") = xs,
-    Rcpp::Named("y") = ys
+    Rcpp::Named("y") = ys,
+    Rcpp::Named("too_many_overlaps") = too_many_overlaps
   );
 }
-
-

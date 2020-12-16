@@ -69,24 +69,24 @@
 #' @param point.padding Amount of padding around labeled point, as unit or
 #'   number. Defaults to 0. (Default unit is lines, but other units can be
 #'   specified by passing \code{unit(x, "units")}).
-#' @param segment.size Width of line segment connecting the data point to
-#'   the text label, in mm.
-#' @param segment.colour,segment.color Colour of the line segment. Defaults to the same colour
-#'   as the text. In the unlikely event you specify both US and UK spellings of colour, the
-#'   US spelling will take precedence.
-#' @param segment.alpha Transparency of the line segment. Defaults to the same
-#'   transparency as the text.
 #' @param min.segment.length Skip drawing segments shorter than this, as unit or
 #'   number. Defaults to 0.5. (Default unit is lines, but other units can be
 #'   specified by passing \code{unit(x, "units")}).
 #' @param arrow specification for arrow heads, as created by \code{\link[grid]{arrow}}
 #' @param force Force of repulsion between overlapping text labels. Defaults
 #'   to 1.
+#' @param force_pull Force of attraction between a text label and its
+#'   corresponding data point. Defaults to 1.
+#' @param max.time Maximum number of seconds to try to resolve overlaps.
+#'   Defaults to 0.5.
 #' @param max.iter Maximum number of iterations to try to resolve overlaps.
-#'   Defaults to 2000.
+#'   Defaults to 10000.
+#' @param max.overlaps Exclude text labels that overlap too many things.
+#'   Defaults to 10.
 #' @param direction "both", "x", or "y" -- direction in which to adjust position of labels
 #' @param seed Random seed passed to \code{\link[base]{set.seed}}. Defaults to
 #'   \code{NA}, which means that \code{set.seed} will not be called.
+#' @param verbose If \code{TRUE}, some diagnostics of the repel algorithm are printed
 #'
 #' @examples
 #'
@@ -163,14 +163,13 @@ geom_text_repel <- function(
   ...,
   box.padding = 0.25,
   point.padding = 1e-6,
-  segment.colour = NULL,
-  segment.color = NULL,
-  segment.size = 0.5,
-  segment.alpha = NULL,
   min.segment.length = 0.5,
   arrow = NULL,
   force = 1,
-  max.iter = 2000,
+  force_pull = 1,
+  max.time = 0.5,
+  max.iter = 10000,
+  max.overlaps = getOption("ggrepel.max.overlaps", default = 10),
   nudge_x = 0,
   nudge_y = 0,
   xlim = c(NA, NA),
@@ -179,13 +178,14 @@ geom_text_repel <- function(
   show.legend = NA,
   direction = c("both","y","x"),
   seed = NA,
+  verbose = FALSE,
   inherit.aes = TRUE
 ) {
   if (!missing(nudge_x) || !missing(nudge_y)) {
     if (!missing(position)) {
       stop("Specify either `position` or `nudge_x`/`nudge_y`", call. = FALSE)
     }
-    #position <- position_nudge(nudge_x, nudge_y)
+    position <- position_nudge2(nudge_x, nudge_y)
   }
   layer(
     data = data,
@@ -200,19 +200,20 @@ geom_text_repel <- function(
       na.rm = na.rm,
       box.padding = to_unit(box.padding),
       point.padding = to_unit(point.padding),
-      segment.colour = segment.color %||% segment.colour,
-      segment.size = segment.size,
-      segment.alpha = segment.alpha,
       min.segment.length = to_unit(min.segment.length),
       arrow = arrow,
       force = force,
+      force_pull = force_pull,
+      max.time = max.time,
       max.iter = max.iter,
+      max.overlaps = max.overlaps,
       nudge_x = nudge_x,
       nudge_y = nudge_y,
       xlim = xlim,
       ylim = ylim,
       direction = match.arg(direction),
       seed = seed,
+      verbose = verbose,
       ...
     )
   )
@@ -222,6 +223,7 @@ geom_text_repel <- function(
 #' @rdname ggplot2-ggproto
 #' @format NULL
 #' @usage NULL
+#' @seealso \link[ggplot2]{GeomText} from the ggplot2 package.
 #' @export
 GeomTextRepel <- ggproto("GeomTextRepel", Geom,
   required_aes = c("x", "y", "label"),
@@ -229,7 +231,12 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
   default_aes = aes(
     colour = "black", size = 3.88, angle = 0,
     alpha = NA, family = "", fontface = 1, lineheight = 1.2,
-    hjust = 0.5, vjust = 0.5
+    hjust = 0.5, vjust = 0.5, point.size = 1,
+    segment.linetype = 1, segment.colour = NULL, segment.size = 0.5, segment.alpha = NULL,
+    segment.curvature = 0, segment.angle = 90, segment.ncp = 1,
+    segment.shape = 0.5, segment.square = TRUE, segment.squareShape = 1,
+    segment.inflect = FALSE, segment.debug = FALSE,
+    bg.colour = NA, bg.r = 0.1
   ),
 
   draw_panel = function(
@@ -238,45 +245,58 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     na.rm = FALSE,
     box.padding = 0.25,
     point.padding = 1e-6,
-    segment.colour = NULL,
-    segment.size = 0.5,
-    segment.alpha = NULL,
     min.segment.length = 0.5,
     arrow = NULL,
     force = 1,
-    max.iter = 2000,
+    force_pull = 1,
+    max.time = 0.5,
+    max.iter = 10000,
+    max.overlaps = 10,
     nudge_x = 0,
     nudge_y = 0,
     xlim = c(NA, NA),
     ylim = c(NA, NA),
     direction = "both",
-    seed = NA
+    seed = NA,
+    verbose = FALSE
   ) {
     lab <- data$label
     if (parse) {
-      lab <- parse(text = as.character(lab))
+      lab <- parse_safe(as.character(lab))
     }
     if (!length(which(not_empty(lab)))) {
       return()
     }
 
+    # position_nudge2() should have added these columns.
+    for (this_dim in c("x", "y")) {
+      this_nudge <- sprintf("nudge_%s", this_dim)
+      if (!this_nudge %in% colnames(data)) {
+        data[[this_nudge]] <- data[[this_dim]]
+      }
+    }
     # Transform the nudges to the panel scales.
-    nudges <- data.frame(
-      x = data$x + nudge_x,
-      y = data$y + nudge_y
-    )
+    nudges <- data.frame(x = data$nudge_x, y = data$nudge_y)
     nudges <- coord$transform(nudges, panel_scales)
 
     # Transform the raw data to the panel scales.
     data <- coord$transform(data, panel_scales)
 
     # The nudge is relative to the data.
-    nudges$x <- nudges$x - data$x
-    nudges$y <- nudges$y - data$y
+    data$nudge_x <- nudges$x - data$x
+    data$nudge_y <- nudges$y - data$y
 
     # Transform limits to panel scales.
     limits <- data.frame(x = xlim, y = ylim)
     limits <- coord$transform(limits, panel_scales)
+
+    # Allow Inf.
+    if (length(limits$x) == length(xlim)) {
+      limits$x[is.infinite(xlim)] <- xlim[is.infinite(xlim)]
+    }
+    if (length(limits$y) == length(ylim)) {
+      limits$y[is.infinite(ylim)] <- ylim[is.infinite(ylim)]
+    }
 
     # Fill NAs with defaults.
     limits$x[is.na(limits$x)] <- c(0, 1)[is.na(limits$x)]
@@ -294,18 +314,18 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
       limits = limits,
       data = data,
       lab = lab,
-      nudges = nudges,
       box.padding = to_unit(box.padding),
       point.padding = to_unit(point.padding),
-      segment.colour = segment.colour,
-      segment.size = segment.size,
-      segment.alpha = segment.alpha,
       min.segment.length = to_unit(min.segment.length),
       arrow = arrow,
       force = force,
+      force_pull = force_pull,
+      max.time = max.time,
       max.iter = max.iter,
+      max.overlaps = max.overlaps,
       direction = direction,
       seed = seed,
+      verbose = verbose,
       cl = "textrepeltree"
     ))
   },
@@ -327,37 +347,39 @@ makeContent.textrepeltree <- function(x) {
   if (is.na(x$point.padding)) {
     x$point.padding = unit(0, "lines")
   }
-  point_padding_x <- convertWidth(x$point.padding, "native", valueOnly = TRUE)
-  point_padding_y <- convertHeight(x$point.padding, "native", valueOnly = TRUE)
 
   # Do not create text labels for empty strings.
   valid_strings <- which(not_empty(x$lab))
   invalid_strings <- which(!not_empty(x$lab))
+  ix <- c(valid_strings, invalid_strings)
+  x$data <- x$data[ix,]
+  x$lab <- x$lab[ix]
 
   # Create a dataframe with x1 y1 x2 y2
-  boxes <- lapply(valid_strings, function(i) {
+  boxes <- lapply(seq_along(valid_strings), function(i) {
     row <- x$data[i, , drop = FALSE]
-    hj <- x$data$hjust[i]
-    vj <- x$data$vjust[i]
     tg <- textGrob(
       x$lab[i],
       row$x, row$y, default.units = "native",
       rot = row$angle,
+      hjust = row$hjust,
+      vjust = row$vjust,
       gp = gpar(
-        fontsize = row$size * .pt,
+        fontsize   = row$size * .pt,
         fontfamily = row$family,
-        fontface = row$fontface,
+        fontface   = row$fontface,
         lineheight = row$lineheight
       )
     )
-    gw <- convertWidth(grobWidth(tg), "native", TRUE)
-    gh <- convertHeight(grobHeight(tg), "native", TRUE)
-
+    x1 <- convertWidth(grobX(tg, "west"), "native", TRUE)
+    x2 <- convertWidth(grobX(tg, "east"), "native", TRUE)
+    y1 <- convertHeight(grobY(tg, "south"), "native", TRUE)
+    y2 <- convertHeight(grobY(tg, "north"), "native", TRUE)
     c(
-      "x1" = row$x - gw * hj  - box_padding_x + x$nudges$x[i],
-      "y1" = row$y - gh * vj - box_padding_y + x$nudges$y[i],
-      "x2" = row$x + gw * (1 - hj) + box_padding_x + x$nudges$x[i],
-      "y2" = row$y + gh * (1 - vj) + box_padding_y + x$nudges$y[i]
+      "x1" = x1 - box_padding_x + row$nudge_x,
+      "y1" = y1 - box_padding_y + row$nudge_y,
+      "x2" = x2 + box_padding_x + row$nudge_x,
+      "y2" = y2 + box_padding_y + row$nudge_y
     )
   })
 
@@ -366,76 +388,143 @@ makeContent.textrepeltree <- function(x) {
       set.seed(x$seed)
   }
 
-  points_valid_first <- cbind(c(x$data$x[valid_strings],
-                                x$data$x[invalid_strings]),
-                              c(x$data$y[valid_strings],
-                                x$data$y[invalid_strings]))
+  # The points are represented by circles.
+  x$data$point.size[is.na(x$data$point.size)] <- 0
+
+  # Beware the magic numbers. I do not understand them.
+  # I just accept them as necessary to get the code to work.
+  p_width <- convertWidth(unit(1, "npc"), "inch", TRUE)
+  p_height <- convertHeight(unit(1, "npc"), "inch", TRUE)
+  p_ratio <- (p_width / p_height)
+  if (p_ratio > 1) {
+    p_ratio <- p_ratio ^ (1 / (1.15 * p_ratio))
+  }
+  point_size <- p_ratio * convertWidth(
+    to_unit(x$data$point.size), "native", valueOnly = TRUE
+  ) / 13
+  point_padding <- p_ratio * convertWidth(
+    to_unit(x$point.padding), "native", valueOnly = TRUE
+  ) / 13
 
   # Repel overlapping bounding boxes away from each other.
-  repel <- repel_boxes(
-    data_points = points_valid_first,
-    point_padding_x = point_padding_x,
-    point_padding_y = point_padding_y,
-    boxes = do.call(rbind, boxes),
-    xlim = range(x$limits$x),
-    ylim = range(x$limits$y),
-    hjust = x$data$hjust,
-    vjust = x$data$vjust,
-    force = x$force * 1e-6,
-    maxiter = x$max.iter,
-    direction = x$direction
+  repel <- repel_boxes2(
+    data_points     = as.matrix(x$data[,c("x","y")]),
+    point_size      = point_size,
+    point_padding_x = point_padding,
+    point_padding_y = point_padding,
+    boxes           = do.call(rbind, boxes),
+    xlim            = range(x$limits$x),
+    ylim            = range(x$limits$y),
+    hjust           = x$data$hjust %||% 0.5,
+    vjust           = x$data$vjust %||% 0.5,
+    force_push      = x$force * 1e-6,
+    force_pull      = x$force_pull * 1e-2,
+    max_time        = x$max.time,
+    max_iter        = ifelse(is.infinite(x$max.iter), 1e9, x$max.iter),
+    max_overlaps    = x$max.overlaps,
+    direction       = x$direction,
+    verbose         = x$verbose
   )
 
-  grobs <- lapply(seq_along(valid_strings), function(i) {
-    xi <- valid_strings[i]
-    row <- x$data[xi, , drop = FALSE]
-    # browser()
-    textRepelGrob(
-      x$lab[xi],
-      # Position of text bounding boxes.
-      x = unit(repel$x[i], "native"),
-      y = unit(repel$y[i], "native"),
-      # Position of original data points.
-      x.orig = unit(x$data$x[xi], "native"),
-      y.orig = unit(x$data$y[xi], "native"),
-      rot = row$angle,
-      box.padding = x$box.padding,
-      point.padding = x$point.padding,
-      text.gp = gpar(
-        col = scales::alpha(row$colour, row$alpha),
-        fontsize = row$size * .pt,
-        fontfamily = row$family,
-        fontface = row$fontface,
-        lineheight = row$lineheight
-      ),
-      segment.gp = gpar(
-        col = scales::alpha(x$segment.colour %||% row$colour, x$segment.alpha %||% row$alpha),
-        lwd = x$segment.size * .pt
-      ),
-      arrow = x$arrow,
-      min.segment.length = x$min.segment.length,
-      hjust = x$data$hjust[i],
-      vjust = x$data$vjust[i]
+  if (any(repel$too_many_overlaps)) {
+    warn(
+      sprintf(
+        "ggrepel: %s unlabeled data points (too many overlaps). Consider increasing max.overlaps",
+        sum(repel$too_many_overlaps)
+      )
     )
+  }
+
+  if (all(repel$too_many_overlaps)) {
+    grobs <- list()
+    class(grobs) <- "gList"
+    return(setChildren(x, grobs))
+  }
+
+  grobs <- lapply(seq_along(valid_strings), function(i) {
+    if (!repel$too_many_overlaps[i]) {
+      row <- x$data[i, , drop = FALSE]
+      makeTextRepelGrobs(
+        i,
+        x$lab[i],
+        # Position of text bounding boxes.
+        x = unit(repel$x[i], "native"),
+        y = unit(repel$y[i], "native"),
+        # Position of original data points.
+        x.orig = row$x,
+        y.orig = row$y,
+        # Width and height of text boxes.
+        box.width = boxes[[i]]["x2"] - boxes[[i]]["x1"],
+        box.height = boxes[[i]]["y2"] - boxes[[i]]["y1"],
+        rot = row$angle,
+        box.padding = x$box.padding,
+        point.size = point_size[i],
+        point.padding = x$point.padding,
+        segment.curvature = row$segment.curvature,
+        segment.angle     = row$segment.angle,
+        segment.ncp       = row$segment.ncp,
+        segment.shape = row$segment.shape,
+        segment.square = row$segment.square,
+        segment.squareShape = row$segment.squareShape,
+        segment.inflect = row$segment.inflect,
+        segment.debug = row$segment.debug,
+        text.gp = gpar(
+          col = scales::alpha(row$colour, row$alpha),
+          fontsize = row$size * .pt,
+          fontfamily = row$family,
+          fontface = row$fontface,
+          lineheight = row$lineheight
+        ),
+        segment.gp = gpar(
+          col = scales::alpha(row$segment.colour %||% row$colour, row$segment.alpha %||% row$alpha),
+          lwd = row$segment.size * .pt,
+          lty = row$segment.linetype %||% 1
+        ),
+        arrow = x$arrow,
+        min.segment.length = x$min.segment.length,
+        hjust = row$hjust,
+        vjust = row$vjust,
+        bg.colour = alpha(row$bg.colour, row$alpha),
+        bg.r = row$bg.r
+      )
+    }
   })
+
+  grobs <- unlist(grobs, recursive = FALSE)
   class(grobs) <- "gList"
+
+  # Put segment grobs before text grobs.
+  grob_names <- sapply(grobs, "[[", "name")
+  grobs <- grobs[order(!grepl("^segment", grob_names))]
 
   setChildren(x, grobs)
 }
 
-textRepelGrob <- function(
+makeTextRepelGrobs <- function(
+  i,
   label,
   # Position of text bounding boxes.
   x = unit(0.5, "npc"),
   y = unit(0.5, "npc"),
   # Position of original data points.
-  x.orig = unit(0.5, "npc"),
-  y.orig = unit(0.5, "npc"),
+  x.orig = 0.5,
+  y.orig = 0.5,
+  # Width and height of text boxes.
+  box.width = 0,
+  box.height = 0,
   rot = 0,
   default.units = "npc",
-  just = "center",
   box.padding = 0.25,
+  point.size = 1,
   point.padding = 1e-6,
+  segment.curvature = 0,
+  segment.angle = 90,
+  segment.ncp = 1,
+  segment.shape = 0.5,
+  segment.square = TRUE,
+  segment.squareShape = 1,
+  segment.inflect = FALSE,
+  segment.debug = FALSE,
   name = NULL,
   text.gp = gpar(),
   segment.gp = gpar(),
@@ -443,70 +532,45 @@ textRepelGrob <- function(
   arrow = NULL,
   min.segment.length = 0.5,
   hjust = 0.5,
-  vjust = 0.5
+  vjust = 0.5,
+  bg.colour = NA,
+  bg.r = .1
 ) {
-
   stopifnot(length(label) == 1)
 
   if (!is.unit(x))
     x <- unit(x, default.units)
   if (!is.unit(y))
     y <- unit(y, default.units)
+  if (!is.unit(box.width))
+    box.width <- unit(box.width, default.units)
+  if (!is.unit(box.height))
+    box.height <- unit(box.height, default.units)
 
-  gTree(
-    label = label,
-    # Position of text bounding boxes.
-    x = x,
-    y = y,
-    # Position of original data points.
-    x.orig = x.orig,
-    y.orig = y.orig,
+  rot_radians <- rot * pi / 180
+  grobs <- shadowtextGrob(
+    label,
+    x - cos(rot_radians) * box.width * (0.5 - hjust) -
+        cos(rot_radians) * box.width * (0.5 - vjust),
+    y - sin(rot_radians) * box.height * (0.5 - vjust) -
+        sin(rot_radians) * box.height * (0.5 - hjust),
     rot = rot,
-    just = just,
-    box.padding = box.padding,
-    point.padding = point.padding,
-    name = name,
-    text.gp = text.gp,
-    segment.gp = segment.gp,
-    vp = vp,
-    cl = "textrepelgrob",
-    arrow = arrow,
-    min.segment.length = min.segment.length,
     hjust = hjust,
-    vjust = vjust
+    vjust = vjust,
+    gp = text.gp,
+    name = sprintf("textrepelgrob%s", i),
+    bg.colour = bg.colour,
+    bg.r = bg.r
   )
-}
+  # the regular textgrob will always be the last one
+  tg <- grobs[[length(grobs)]]
 
-#' grid::makeContent function for textRepelGrob.
-#'
-#' @param x A grid grob.
-#' @export
-#' @noRd
-makeContent.textrepelgrob <- function(x) {
-  hj <- resolveHJust(x$just, NULL)
-  vj <- resolveVJust(x$just, NULL)
+  x1 <- convertWidth(grobX(tg, "west"), "native", TRUE)
+  x2 <- convertWidth(grobX(tg, "east"), "native", TRUE)
+  y1 <- convertHeight(grobY(tg, "south"), "native", TRUE)
+  y2 <- convertHeight(grobY(tg, "north"), "native", TRUE)
 
-  t <- textGrob(
-    x$label,
-    x$x + 2 * (0.5 - hj) * x$box.padding,
-    x$y + 2 * (0.5 - vj) * x$box.padding,
-    rot = x$rot,
-    just = c(hj, vj),
-    gp = x$text.gp,
-    name = "text"
-  )
-
-  x1 <- convertWidth(x$x - 0.5 * grobWidth(t), "native", TRUE)
-  x2 <- convertWidth(x$x + 0.5 * grobWidth(t), "native", TRUE)
-  y1 <- convertHeight(x$y - 0.5 * grobHeight(t), "native", TRUE)
-  y2 <- convertHeight(x$y + 0.5 * grobHeight(t), "native", TRUE)
-
-  point_pos <- c(
-    convertWidth(x$x.orig, "native", TRUE),
-    convertHeight(x$y.orig, "native", TRUE)
-  )
-
-  center <- centroid(c(x1, y1, x2, y2), x$hjust, x$vjust)
+  point_pos <- c(x.orig, y.orig)
 
   # Get the coordinates of the intersection between the line from the
   # original data point to the centroid and the rectangle's edges.
@@ -520,50 +584,63 @@ makeContent.textrepelgrob <- function(x) {
   int <- select_line_connection(point_pos, text_box)
 
   # Check if the data point is inside the label box.
-  point_inside <- FALSE
+  point_inside_text <- FALSE
   if (text_box[1] <= point_pos[1] && point_pos[1] <= text_box[3] &&
       text_box[2] <= point_pos[2] && point_pos[2] <= text_box[4]) {
-    point_inside <- TRUE
+    point_inside_text <- TRUE
   }
 
-  # Nudge the original data point toward the label with point.padding.
-  point_padding_x <- convertWidth(x$point.padding, "native", TRUE) / 2
-  point_padding_y <- convertHeight(x$point.padding, "native", TRUE) / 2
-  point_padding <- point_padding_x > 0 & point_padding_y > 0
-  if (point_padding) {
-    point_box <- c(
-      point_pos[1] - point_padding_x, point_pos[2] - point_padding_y,
-      point_pos[1] + point_padding_x, point_pos[2] + point_padding_y
-    )
-    point_pos <- intersect_line_rectangle(center, point_pos, point_box)
-  }
+  # This seems just fine.
+  point.padding <- convertWidth(to_unit(point.padding), "native", TRUE) / 2
+
+  point_int <- intersect_line_circle(int, point_pos, (point.size + point.padding))
 
   # Compute the distance between the data point and the edge of the text box.
-  dx <- abs(int[1] - point_pos[1])
-  dy <- abs(int[2] - point_pos[2])
+  dx <- abs(int[1] - point_int[1])
+  dy <- abs(int[2] - point_int[2])
   d <- sqrt(dx * dx + dy * dy)
+
   # Scale the unit vector by the minimum segment length.
   if (d > 0) {
-    mx <- convertWidth(x$min.segment.length, "native", TRUE)
-    my <- convertHeight(x$min.segment.length, "native", TRUE)
+    mx <- convertWidth(min.segment.length, "native", TRUE)
+    my <- convertHeight(min.segment.length, "native", TRUE)
     min.segment.length <- sqrt((mx * dx / d) ^ 2 + (my * dy / d) ^ 2)
   }
 
-  if (!point_inside && d > 0 && euclid(int, point_pos) > min.segment.length) {
-    s <- segmentsGrob(
-      x0 = int[1],
-      y0 = int[2],
-      x1 = point_pos[1],
-      y1 = point_pos[2],
+  if (
+    !point_inside_text &&
+    d > 0 &&
+    # Distance from label to point edge is greater than minimum.
+    euclid(int, point_int) > min.segment.length &&
+    # Distance from label to point edge is less than from label to point center.
+    euclid(int, point_int) < euclid(int, point_pos) &&
+    # Distance from label to point center is greater than point size.
+    euclid(int, point_pos) > point.size &&
+    # Distance from label to point center is greater than from point edge to point center.
+    euclid(int, point_pos) > euclid(point_int, point_pos)
+  ) {
+    s <- curveGrob(
+      x1 = int[1],
+      y1 = int[2],
+      x2 = point_int[1],
+      y2 = point_int[2],
       default.units = "native",
-      gp = x$segment.gp,
-      name = "segment",
-      arrow = x$arrow
+      curvature = segment.curvature,
+      angle = segment.angle,
+      ncp = segment.ncp,
+      shape = segment.shape,
+      square = segment.square,
+      squareShape = segment.squareShape,
+      inflect = segment.inflect,
+      debug = segment.debug,
+      gp = segment.gp,
+      name = sprintf("segmentrepelgrob%s", i),
+      arrow = arrow
     )
-    setChildren(x, gList(s, t))
-  } else {
-    setChildren(x, gList(t))
+    grobs[[s$name]] <- s
   }
+
+  grobs
 }
 
 # copied from ggplot2
@@ -583,4 +660,53 @@ just_dir <- function(x, tol = 0.001) {
   out[x < 0.5 - tol] <- 1L
   out[x > 0.5 + tol] <- 3L
   out
+}
+
+# Adapted from shadowtext, at the time of writing located at:
+# https://github.com/GuangchuangYu/shadowtext/blob/325d25919b28ccd4184c6363c11c8c26e822dd95/R/shadowtext-grob.R#L28
+# This function was modified to always return a gList,
+# whether bg.colour is NA or not.
+# Each background textgrob is made to have a unique name, otherwise
+# it can mess up the plotting order.
+shadowtextGrob <- function(
+  label, x = unit(0.5, "npc"), y = unit(0.5, "npc"),
+  hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE,
+  default.units = "npc", name = NULL, gp = gpar(col="white"), vp = NULL,
+  bg.colour = "black", bg.r = 0.1
+) {
+  upperGrob <- textGrob(
+    label = label, x = x, y = y, hjust = hjust,
+    vjust = vjust, rot = rot, default.units = default.units,
+    check.overlap = check.overlap, name = name, gp = gp, vp = vp
+  )
+
+  if (is.na(bg.colour)) {
+    gList(upperGrob)
+  } else {
+    gp$col <- bg.colour
+
+    theta <- seq(pi/8, 2*pi, length.out=16)
+    char <- "X"
+    # char <- substring(label[1], 1, 1)
+    r <- bg.r[1]
+
+    if (!is.unit(x)) {
+      x <- unit(x, default.units)
+    }
+    if (!is.unit(y)) {
+      y <- unit(y, default.units)
+    }
+
+    bgList <- lapply(theta, function(i) {
+      x <- x + unit(cos(i) * r, "strheight", data = char)
+      y <- y + unit(sin(i) * r, "strheight", data = char)
+      textGrob(
+        label = label, x = x, y = y, hjust = hjust,
+        vjust = vjust, rot = rot, default.units = default.units,
+        check.overlap = check.overlap, name = paste0(name, "-shadowtext", i), gp = gp, vp = vp
+      )
+    })
+
+    do.call(gList, c(bgList, list(upperGrob)))
+  }
 }

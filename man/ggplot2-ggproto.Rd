@@ -10,4 +10,9 @@ GeomLabelRepel
 
 GeomTextRepel
 }
+\seealso{
+\link[ggplot2]{GeomLabel} from the ggplot2 package.
+
+\link[ggplot2]{GeomText} from the ggplot2 package.
+}
 \keyword{datasets}
