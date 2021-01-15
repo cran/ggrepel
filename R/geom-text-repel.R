@@ -59,7 +59,8 @@
 #'     \item Other arguments passed on to the stat.
 #'   }
 #' @param nudge_x,nudge_y Horizontal and vertical adjustments to nudge the
-#'   starting position of each text label.
+#'   starting position of each text label. The units for \code{nudge_x} and
+#'   \code{nudge_y} are the same as for the data units on the x-axis and y-axis.
 #' @param xlim,ylim Limits for the x and y axes. Text labels will be constrained
 #'   to these limits. By default, text labels are constrained to the entire plot
 #'   area.
@@ -117,7 +118,7 @@
 #' p + geom_text_repel(segment.colour = NA)
 #'
 #' # Repel just the labels and totally ignore the data points
-#' p + geom_text_repel(point.padding = NA)
+#' p + geom_text_repel(point.size = NA)
 #'
 #' # Hide some of the labels, but repel from all data points
 #' mtcars$label <- rownames(mtcars)
@@ -185,7 +186,7 @@ geom_text_repel <- function(
     if (!missing(position)) {
       stop("Specify either `position` or `nudge_x`/`nudge_y`", call. = FALSE)
     }
-    position <- position_nudge2(nudge_x, nudge_y)
+    position <- position_nudge_repel(nudge_x, nudge_y)
   }
   layer(
     data = data,
@@ -220,7 +221,7 @@ geom_text_repel <- function(
 }
 
 #' GeomTextRepel
-#' @rdname ggplot2-ggproto
+#' @rdname ggrepel-ggproto
 #' @format NULL
 #' @usage NULL
 #' @seealso \link[ggplot2]{GeomText} from the ggplot2 package.
@@ -268,7 +269,7 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
       return()
     }
 
-    # position_nudge2() should have added these columns.
+    # position_nudge_repel() should have added these columns.
     for (this_dim in c("x", "y")) {
       this_nudge <- sprintf("nudge_%s", this_dim)
       if (!this_nudge %in% colnames(data)) {
