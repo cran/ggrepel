@@ -76,10 +76,11 @@ geom_label_repel <- function(
 }
 
 #' GeomLabelRepel
-#' @rdname ggrepel-ggproto
+#' @rdname ggrepel
 #' @format NULL
 #' @usage NULL
 #' @seealso \link[ggplot2]{GeomLabel} from the ggplot2 package.
+#' @keywords internal
 #' @export
 GeomLabelRepel <- ggproto(
   "GeomLabelRepel", Geom,
@@ -127,13 +128,19 @@ GeomLabelRepel <- ggproto(
       return()
     }
 
-    # position_nudge_repel() should have added these columns.
+    # if needed rename columns using our convention
     for (this_dim in c("x", "y")) {
+      this_orig <- sprintf("%s_orig", this_dim)
       this_nudge <- sprintf("nudge_%s", this_dim)
       if (!this_nudge %in% colnames(data)) {
         data[[this_nudge]] <- data[[this_dim]]
+        if (this_orig %in% colnames(data)) {
+          data[[this_dim]] <- data[[this_orig]]
+          data[[this_orig]] <- NULL
+        }
       }
     }
+
     # Transform the nudges to the panel scales.
     nudges <- data.frame(x = data$nudge_x, y = data$nudge_y)
     nudges <- coord$transform(nudges, panel_scales)
