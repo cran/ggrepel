@@ -82,7 +82,9 @@
 #'   Defaults to 0.5.
 #' @param max.iter Maximum number of iterations to try to resolve overlaps.
 #'   Defaults to 10000.
-#' @param max.overlaps Exclude text labels that overlap too many things.
+#' @param max.overlaps Exclude text labels when they overlap too many other
+#'   things. For each text label, we count how many other text labels or other
+#'   data points it overlaps, and exclude the text label if it has too many overlaps.
 #'   Defaults to 10.
 #' @param direction "both", "x", or "y" -- direction in which to adjust position of labels
 #' @param seed Random seed passed to \code{\link[base]{set.seed}}. Defaults to
@@ -262,11 +264,14 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     seed = NA,
     verbose = FALSE
   ) {
-    lab <- data$label
+
+    # Do not draw labels for data points outside the panel
+    data <- exclude_outside(data, panel_scales)
+
     if (parse) {
-      lab <- parse_safe(as.character(lab))
+      data$label <- parse_safe(as.character(data$label))
     }
-    if (!length(which(not_empty(lab)))) {
+    if (!length(data$label) || !length(which(not_empty(data$label)))) {
       return()
     }
 
@@ -326,7 +331,7 @@ GeomTextRepel <- ggproto("GeomTextRepel", Geom,
     ggname("geom_text_repel", gTree(
       limits = limits,
       data = data,
-      lab = lab,
+      lab = data$label,
       box.padding = to_unit(box.padding),
       point.padding = to_unit(point.padding),
       min.segment.length = to_unit(min.segment.length),
@@ -630,7 +635,7 @@ makeTextRepelGrobs <- function(
     !point_inside_text &&
     d > 0 &&
     # Distance from label to point edge is greater than minimum.
-    euclid(int, point_int) > min.segment.length &&
+    (!is.na(min.segment.length) && euclid(int, point_int) > min.segment.length) &&
     # Distance from label to point edge is less than from label to point center.
     euclid(int, point_int) < euclid(int, point_pos) &&
     # Distance from label to point center is greater than point size.

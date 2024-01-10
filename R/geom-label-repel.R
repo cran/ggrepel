@@ -120,11 +120,14 @@ GeomLabelRepel <- ggproto(
     seed = NA,
     verbose = FALSE
   ) {
-    lab <- data$label
+
+    # Do not draw labels for data points outside the panel
+    data <- exclude_outside(data, panel_scales)
+
     if (parse) {
-      lab <- parse_safe(as.character(lab))
+      data$label <- parse_safe(as.character(data$label))
     }
-    if (!length(which(not_empty(lab)))) {
+    if (!length(data$label) || !length(which(not_empty(data$label)))) {
       return()
     }
 
@@ -179,7 +182,7 @@ GeomLabelRepel <- ggproto(
     ggname("geom_label_repel", gTree(
       limits = limits,
       data = data,
-      lab = lab,
+      lab = data$label,
       box.padding = to_unit(box.padding),
       label.padding = to_unit(label.padding),
       point.padding = to_unit(point.padding),
@@ -491,7 +494,7 @@ makeLabelRepelGrobs <- function(
     !point_inside_text &&
     d > 0 &&
     # Distance from label to point edge is greater than minimum.
-    euclid(int, point_int) > min.segment.length &&
+    (!is.na(min.segment.length) && euclid(int, point_int) > min.segment.length) &&
     # Distance from label to point edge is less than from label to point center.
     euclid(int, point_int) < euclid(int, point_pos) &&
     # Distance from label to point center is greater than point size.
