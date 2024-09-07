@@ -11,11 +11,11 @@
 
 <meta name="author" content="Kamil Slowikowski" />
 
-<meta name="date" content="2024-01-10" />
+<meta name="date" content="2024-09-07" />
 
 <title>Examples</title>
 
-<script src="examples_files/header-attrs-2.23/header-attrs.js"></script>
+<script src="examples_files/header-attrs-2.27/header-attrs.js"></script>
 <script src="examples_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="examples_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -164,7 +164,7 @@ pre code {
 
 <h1 class="title toc-ignore">Examples</h1>
 <h4 class="author">Kamil Slowikowski</h4>
-<h4 class="date">2024-01-10</h4>
+<h4 class="date">2024-09-07</h4>
 
 </div>
 
@@ -1223,7 +1223,7 @@ p + geom_text_repel(
   size = 3
 )</code></pre>
 <p><img src="examples_files/figure-html/timing-1.png" width="700" /></p>
-<pre><code>## 1.00s elapsed for 153910 iterations, 2 overlaps. Consider increasing &#39;max.time&#39;.</code></pre>
+<pre><code>## 1.00s elapsed for 154530 iterations, 2 overlaps. Consider increasing &#39;max.time&#39;.</code></pre>
 </div>
 <div id="word-cloud" class="section level3">
 <h3>Word cloud</h3>
@@ -1281,6 +1281,22 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl), label = label)) +
   geom_text_repel(show.legend = FALSE) + # Don&#39;t display &quot;a&quot; in the legend.
   theme_bw(base_size = 18)</code></pre>
 <p><img src="examples_files/figure-html/polar-1.png" width="700" /></p>
+</div>
+<div id="modified-coordinates" class="section level3">
+<h3>Modified coordinates</h3>
+<p>ggrepel works with modified x and y coordinates:</p>
+<pre class="r"><code>p &lt;- ggplot(mtcars, aes(wt, mpg, label = rownames(mtcars))) +
+  geom_text_repel() +
+  geom_point(color = &#39;red&#39;)</code></pre>
+<pre class="r"><code># Swap the x and y coordinates
+p + coord_flip()</code></pre>
+<p><img src="examples_files/figure-html/coord_flip-1.png" width="700" /></p>
+<pre class="r"><code># Limit the x-axis to values &lt;= 3
+p + scale_x_continuous(limits = c(NA, 3))</code></pre>
+<p><img src="examples_files/figure-html/x_limits_na-1.png" width="700" /></p>
+<pre class="r"><code># Transform the y-axis with a pseudo log transformation
+p + coord_trans(y = scales::pseudo_log_trans(base = 2, sigma = 0.1))</code></pre>
+<p><img src="examples_files/figure-html/pseudo_log_trans-1.png" width="700" /></p>
 </div>
 <div id="unicode-characters-japanese" class="section level3">
 <h3>Unicode characters (Japanese)</h3>
@@ -1388,20 +1404,20 @@ code for this vignette</a> on GitHub.</p>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] patchwork_1.1.2  ggpp_0.5.5       sf_1.0-12        ggbeeswarm_0.7.2 ggrepel_0.9.5   
-## [6] ggplot2_3.4.4    gridExtra_2.3    knitr_1.43      
+## [1] sf_1.0-12        patchwork_1.2.0  ggpp_0.5.5       ggbeeswarm_0.7.2 ggrepel_0.9.6   
+## [6] ggplot2_3.5.1    gridExtra_2.3    knitr_1.47      
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] beeswarm_0.4.0     tidyselect_1.2.0   xfun_0.39          bslib_0.5.0        colorspace_2.1-0  
-##  [6] vctrs_0.6.5        generics_0.1.3     htmltools_0.5.5    yaml_2.3.7         utf8_1.2.4        
-## [11] rlang_1.1.2        e1071_1.7-13       jquerylib_0.1.4    pillar_1.9.0       glue_1.6.2        
-## [16] withr_2.5.2        DBI_1.1.3          lifecycle_1.0.4    munsell_0.5.0      gtable_0.3.4      
-## [21] codetools_0.2-19   evaluate_0.21      labeling_0.4.3     fastmap_1.1.1      vipor_0.4.5       
-## [26] class_7.3-21       fansi_1.0.5        highr_0.10         Rcpp_1.0.11        KernSmooth_2.23-20
-## [31] polynom_1.4-1      scales_1.3.0       classInt_0.4-9     cachem_1.0.8       jsonlite_1.8.7    
-## [36] farver_2.1.1       digest_0.6.31      dplyr_1.1.2        grid_4.2.3         cli_3.6.1         
-## [41] tools_4.2.3        magrittr_2.0.3     sass_0.4.6         proxy_0.4-27       tibble_3.2.1      
-## [46] pkgconfig_2.0.3    MASS_7.3-58.2      timechange_0.2.0   lubridate_1.9.2    rmarkdown_2.23    
+##  [1] beeswarm_0.4.0     tidyselect_1.2.1   xfun_0.44          bslib_0.7.0        colorspace_2.1-0  
+##  [6] vctrs_0.6.5        generics_0.1.3     htmltools_0.5.8.1  yaml_2.3.8         utf8_1.2.4        
+## [11] rlang_1.1.3        e1071_1.7-13       jquerylib_0.1.4    pillar_1.9.0       glue_1.7.0        
+## [16] withr_3.0.0        DBI_1.2.3          lifecycle_1.0.4    munsell_0.5.0      gtable_0.3.4      
+## [21] codetools_0.2-19   evaluate_0.23      labeling_0.4.3     fastmap_1.2.0      vipor_0.4.5       
+## [26] class_7.3-21       fansi_1.0.6        highr_0.11         Rcpp_1.0.11        KernSmooth_2.23-20
+## [31] polynom_1.4-1      scales_1.3.0.9000  classInt_0.4-9     cachem_1.1.0       jsonlite_1.8.8    
+## [36] farver_2.1.1       digest_0.6.35      dplyr_1.1.4        grid_4.2.3         cli_3.6.2         
+## [41] tools_4.2.3        magrittr_2.0.3     sass_0.4.9         proxy_0.4-27       tibble_3.2.1      
+## [46] pkgconfig_2.0.3    MASS_7.3-58.2      timechange_0.2.0   lubridate_1.9.3    rmarkdown_2.27    
 ## [51] R6_2.5.1           units_0.8-2        compiler_4.2.3</code></pre>
 </div>
 
