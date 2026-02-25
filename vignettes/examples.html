@@ -11,11 +11,11 @@
 
 <meta name="author" content="Kamil Slowikowski" />
 
-<meta name="date" content="2024-09-07" />
+<meta name="date" content="2026-01-02" />
 
 <title>Examples</title>
 
-<script src="examples_files/header-attrs-2.27/header-attrs.js"></script>
+<script src="examples_files/header-attrs-2.30/header-attrs.js"></script>
 <script src="examples_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="examples_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -164,7 +164,7 @@ pre code {
 
 <h1 class="title toc-ignore">Examples</h1>
 <h4 class="author">Kamil Slowikowski</h4>
-<h4 class="date">2024-09-07</h4>
+<h4 class="date">2026-01-02</h4>
 
 </div>
 
@@ -177,6 +177,7 @@ text labels:</p>
 <ul>
 <li><code>geom_text_repel()</code></li>
 <li><code>geom_label_repel()</code></li>
+<li><code>geom_marquee_repel()</code></li>
 </ul>
 <p>Text labels repel away from each other, away from data points, and
 away from edges of the plotting area (panel).</p>
@@ -196,7 +197,7 @@ p1 &lt;- p + geom_text() + labs(title = &quot;geom_text()&quot;)
 p2 &lt;- p + geom_text_repel() + labs(title = &quot;geom_text_repel()&quot;)
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
-<p><img src="examples_files/figure-html/comparison-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/comparison-1.png" alt="" width="700" /></p>
 </div>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
@@ -312,6 +313,8 @@ but it also provides a few more that are unique to ggrepel.</p>
 href="https://ggplot2.tidyverse.org/articles/ggplot2-specs.html">ggplot2
 documentation about aesthetic specifications</a> for more details and
 examples.</p>
+<p>The following aesthetics are the same for all functions
+(<code>geom_text()</code>, <code>geom_text_repel()</code>, etc.):</p>
 <table>
 <colgroup>
 <col width="20%" />
@@ -371,77 +374,147 @@ examples.</p>
 <td><code>0.5</code></td>
 <td>vertical justification</td>
 </tr>
-<tr class="even">
+</tbody>
+</table>
+<p>These aesthetics are specific to ggrepel functions, but not
+applicable to ggplot2 functions:</p>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="16%" />
+<col width="64%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aesthetic</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
 <td><code>point.size</code></td>
 <td><code>1</code></td>
 <td>size of each point for each text label</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>segment.linetype</code></td>
 <td><code>1</code></td>
 <td>line segment solid, dashed, etc.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>segment.color</code></td>
 <td><code>"black"</code></td>
 <td>line segment color</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>segment.size</code></td>
 <td><code>0.5 mm</code></td>
 <td>line segment thickness</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>segment.alpha</code></td>
 <td><code>1.0</code></td>
 <td>line segment transparency</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>segment.curvature</code></td>
 <td><code>0</code></td>
 <td>numeric, negative for left-hand and positive for right-hand curves,
 0 for straight lines</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>segment.angle</code></td>
 <td><code>90</code></td>
 <td>0-180, less than 90 skews control points toward the start point</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>segment.ncp</code></td>
 <td><code>1</code></td>
 <td>number of control points to make a smoother curve</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>segment.shape</code></td>
 <td><code>0.5</code></td>
 <td>curve shape by control points approximation/interpolation (1 for
 cubic B-spline, -1 for Catmull-Rom spline)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>segment.square</code></td>
 <td><code>TRUE</code></td>
 <td><code>TRUE</code> to place control points in city-block fashion,
 <code>FALSE</code> for oblique placement</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>segment.squareShape</code></td>
 <td><code>1</code></td>
 <td>shape of the curve relative to additional control points inserted if
 square is <code>TRUE</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>segment.inflect</code></td>
 <td><code>FALSE</code></td>
 <td>curve inflection at the midpoint</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>segment.debug</code></td>
 <td><code>FALSE</code></td>
 <td>display the curve debug information</td>
 </tr>
 </tbody>
 </table>
+<p>And the following aesthetics are specific to
+<code>geom_marquee_repel()</code>:</p>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="16%" />
+<col width="64%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aesthetic</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>style</code></td>
+<td><code>NULL</code></td>
+<td>a <code>marquee_style</code> object specifying the styling, see
+<code>marquee::style()</code></td>
+</tr>
+<tr class="even">
+<td><code>width</code></td>
+<td><code>NA</code></td>
+<td>a <code>grid::unit()</code> object specifying the width of each
+marquee element, e.g., <code>unit(2, "cm")</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="advanced-examples" class="section level2">
+<h2>Advanced examples</h2>
+<p>The ggrepel package works well with the <a
+href="https://docs.r4photobiology.info/ggpp/">ggpp</a> package!</p>
+<p>For more advanced ggrepel examples, check out the <a
+href="https://docs.r4photobiology.info/ggpp/articles/nudge-examples.html">ggpp
+examples</a> by Pedro Aphalo. In that article, Pedro shows how to use
+nudging functions from the <a
+href="https://docs.r4photobiology.info/ggpp/">ggpp</a> package to
+achieve greater control over label positions.</p>
+<p>The <a
+href="https://docs.r4photobiology.info/ggpp/articles/nudge-examples.html">ggpp
+examples</a> page describes how to use many advanced functions,
+including:</p>
+<ul>
+<li><code>position_nudge_to()</code></li>
+<li><code>position_nudge_center()</code></li>
+<li><code>position_nudge_line()</code></li>
+<li><code>position_nudge_keep()</code></li>
+<li>and many more!</li>
+</ul>
 </div>
 <div id="examples" class="section level2">
 <h2>Examples</h2>
@@ -461,7 +534,7 @@ dat2$car[ix_label] &lt;- rownames(dat2)[ix_label]
 ggplot(dat2, aes(wt, mpg, label = car)) +
   geom_text_repel() +
   geom_point(color = ifelse(dat2$car == &quot;&quot;, &quot;grey50&quot;, &quot;red&quot;))</code></pre>
-<p><img src="examples_files/figure-html/empty_string-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/empty_string-1.png" alt="" width="700" /></p>
 <p>We can quickly repel a few text labels from 10,000 data points in the
 example below.</p>
 <p>We use <code>max.overlaps = Inf</code> to ensure that no text labels
@@ -482,7 +555,7 @@ ggplot(dat3, aes(wt, mpg, label = car)) +
   geom_point(data = dat3[dat3$car == &quot;&quot;,], color = &quot;grey50&quot;) +
   geom_text_repel(box.padding = 0.5, max.overlaps = Inf) +
   geom_point(data = dat3[dat3$car != &quot;&quot;,], color = &quot;red&quot;)</code></pre>
-<p><img src="examples_files/figure-html/empty_string_big-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/empty_string_big-1.png" alt="" width="700" /></p>
 </div>
 <div id="always-show-all-labels-even-when-they-have-too-many-overlaps"
 class="section level3">
@@ -522,8 +595,7 @@ p2 &lt;- ggplot(dat4, aes(x, y, label = label)) +
   labs(title = &quot;max.overlaps = Inf&quot;)
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
-<pre><code>## Warning: ggrepel: 15 unlabeled data points (too many overlaps). Consider increasing max.overlaps</code></pre>
-<p><img src="examples_files/figure-html/show_all_labels-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/show_all_labels-1.png" alt="" width="700" /></p>
 </div>
 <div id="do-not-repel-labels-from-data-points" class="section level3">
 <h3>Do not repel labels from data points</h3>
@@ -535,7 +607,7 @@ of the plot.</p>
 ggplot(dat, aes(wt, mpg, label = car)) +
   geom_point(color = &quot;red&quot;) +
   geom_text_repel(point.size = NA)</code></pre>
-<p><img src="examples_files/figure-html/point_size_na-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/point_size_na-1.png" alt="" width="700" /></p>
 </div>
 <div id="do-not-repel-labels-from-plot-panel-edges"
 class="section level3">
@@ -552,7 +624,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
     # Do not repel from top or bottom edges.
     ylim = c(-Inf, Inf)
   )</code></pre>
-<p><img src="examples_files/figure-html/plot_edges-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/plot_edges-1.png" alt="" width="700" /></p>
 <p>We can also disable clipping to allow the labels to go beyond the
 edges of the panel.</p>
 <pre class="r"><code>set.seed(42)
@@ -560,7 +632,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
   geom_point(color = &quot;red&quot;) +
   coord_cartesian(clip = &quot;off&quot;) +
   geom_label_repel(fill = &quot;white&quot;, xlim = c(-Inf, Inf), ylim = c(-Inf, Inf))</code></pre>
-<p><img src="examples_files/figure-html/clipping-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/clipping-1.png" alt="" width="700" /></p>
 </div>
 <div id="expand-the-scale-to-make-room-for-labels"
 class="section level3">
@@ -588,12 +660,12 @@ p &lt;- ggplot(d, aes(x1, y1, xend = x2, yend = y2, label = lab, col = lab)) +
   )
 
 p</code></pre>
-<p><img src="examples_files/figure-html/expand_scale-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/expand_scale-1.png" alt="" width="700" /></p>
 <pre class="r"><code>p + scale_x_continuous(
   breaks = 1:2, labels = c(&quot;Dimension 1&quot;, &quot;Dimension 2&quot;),
   expand = expansion(mult = 0.5)
 )</code></pre>
-<p><img src="examples_files/figure-html/expand_scale-2.png" width="700" /></p>
+<p><img src="examples_files/figure-html/expand_scale-2.png" alt="" width="700" /></p>
 </div>
 <div id="always-or-never-draw-line-segments" class="section level3">
 <h3>Always (or never) draw line segments</h3>
@@ -613,7 +685,7 @@ p2 &lt;- p +
   labs(title = &quot;min.segment.length = Inf&quot;)
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
-<p><img src="examples_files/figure-html/all_segments-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/all_segments-1.png" alt="" width="700" /></p>
 </div>
 <div id="make-curved-line-segments-or-arrows" class="section level3">
 <h3>Make curved line segments or arrows</h3>
@@ -639,7 +711,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
     segment.ncp = 3,
     segment.angle = 20
   )</code></pre>
-<p><img src="examples_files/figure-html/line_curve-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/line_curve-1.png" alt="" width="700" /></p>
 <p>Setting the curvature to a value near zero gives a sharp angle:</p>
 <pre class="r"><code>set.seed(42)
 cars &lt;- c(&quot;Volvo 142E&quot;, &quot;Merc 230&quot;)
@@ -655,7 +727,7 @@ ggplot(dat) +
     arrow = arrow(length = unit(0.015, &quot;npc&quot;))
   ) +
   theme(legend.position = &quot;none&quot;)</code></pre>
-<p><img src="examples_files/figure-html/line_curve_annotate-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/line_curve_annotate-1.png" alt="" width="700" /></p>
 <p>Set <code>segment.square</code>to <code>FALSE</code> to get oblique
 curves, and <code>segment.inflect</code> to <code>TRUE</code> to
 introduce an inflection point.</p>
@@ -691,7 +763,7 @@ ggplot(cars_subset_curves, aes(y = wt, x = 1, label = car)) +
     axis.text.x  = element_blank(),
     axis.title.x = element_blank()
   )</code></pre>
-<p><img src="examples_files/figure-html/line_inflect_and_square-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/line_inflect_and_square-1.png" alt="" width="700" /></p>
 <p>Use <code>segment.shape</code> to adjust the interpolation of the
 control points:</p>
 <pre class="r"><code>set.seed(42)
@@ -725,13 +797,13 @@ ggplot(cars_subset_shapes, aes(y = wt, x = 1, label = car)) +
     axis.text.x  = element_blank(),
     axis.title.x = element_blank()
   )</code></pre>
-<p><img src="examples_files/figure-html/line_shape-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/line_shape-1.png" alt="" width="700" /></p>
 <p>We can use different line types (1, 2, 3, 4, 5, or 6).</p>
-<p><img src="examples_files/figure-html/all_linetypes-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/all_linetypes-1.png" alt="" width="700" /></p>
 <p>And different types of arrows. See <a
 href="https://ggplot2.tidyverse.org/reference/geom_segment.html">ggplot2::geom_segment()</a>
 for more details.</p>
-<p><img src="examples_files/figure-html/all_arrows-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/all_arrows-1.png" alt="" width="700" /></p>
 <pre class="r"><code>set.seed(42)
 cars &lt;- c(&quot;Volvo 142E&quot;, &quot;Merc 230&quot;)
 
@@ -745,7 +817,97 @@ ggplot(dat, aes(wt, mpg, label = ifelse(car %in% cars, car, &quot;&quot;))) +
     segment.curvature = -1e-20,
     arrow = arrow(length = unit(0.015, &quot;npc&quot;))
   )</code></pre>
-<p><img src="examples_files/figure-html/line_curve_annotate_linetype-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/line_curve_annotate_linetype-1.png" alt="" width="700" /></p>
+</div>
+<div id="closed-arrows-with-custom-fill-color" class="section level3">
+<h3>Closed arrows with custom fill color</h3>
+<p>Use the <code>arrow.fill</code> aesthetic to set the fill color for
+closed arrow heads independently from <code>segment.colour</code>. By
+default, <code>arrow.fill</code> matches the segment color.</p>
+<pre class="r"><code>df &lt;- mtcars[1:8,]
+df$car &lt;- rownames(df)
+
+p1 &lt;- ggplot(df, aes(wt, mpg, label = car)) +
+  geom_point(color = &quot;red&quot;) +
+  geom_text_repel(
+    min.segment.length = 0,
+    segment.linetype = 1,
+    arrow = arrow(length = unit(0.05, &quot;npc&quot;), type = &quot;closed&quot;),
+    box.padding = 1.5
+  ) +
+  labs(title = &quot;default: arrow.fill matches segment&quot;)
+
+p2 &lt;- ggplot(df, aes(wt, mpg, label = car)) +
+  geom_point(color = &quot;red&quot;) +
+  geom_text_repel(
+    min.segment.length = 0,
+    segment.colour = &quot;blue&quot;,
+    segment.linetype = 1,
+    arrow = arrow(length = unit(0.05, &quot;npc&quot;), type = &quot;closed&quot;),
+    box.padding = 1.5,
+    arrow.fill = &quot;green&quot;
+  ) +
+  labs(title = &quot;arrow.fill = &#39;yellow&#39;&quot;)
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
+<p><img src="examples_files/figure-html/arrow_fill-1.png" alt="" width="700" /></p>
+</div>
+<div id="customize-label-border-with-linetype-and-linewidth"
+class="section level3">
+<h3>Customize label border with linetype and linewidth</h3>
+<p>Use <code>linetype</code> and <code>linewidth</code> to customize the
+border of <code>geom_label_repel()</code>. Set
+<code>linewidth = 0</code> to hide the border entirely.</p>
+<pre class="r"><code>df &lt;- mtcars[1:8,]
+df$car &lt;- rownames(df)
+
+p1 &lt;- ggplot(df, aes(wt, mpg, label = car)) +
+  geom_point(color = &quot;red&quot;) +
+  geom_label_repel(
+    fill = &quot;white&quot;,
+    linewidth = 2,
+    linetype = &quot;dashed&quot;
+  ) +
+  labs(title = &quot;linewidth = 2, linetype = &#39;dashed&#39;&quot;)
+
+p2 &lt;- ggplot(df, aes(wt, mpg, label = car)) +
+  geom_point(color = &quot;red&quot;) +
+  geom_label_repel(
+    fill = &quot;lightblue&quot;,
+    linewidth = 0
+  ) +
+  labs(title = &quot;linewidth = 0 (no border)&quot;)
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
+<p><img src="examples_files/figure-html/label_border-1.png" alt="" width="700" /></p>
+</div>
+<div id="adjust-line-spacing-with-lineheight" class="section level3">
+<h3>Adjust line spacing with lineheight</h3>
+<p>Use <code>lineheight</code> to control the spacing between lines in
+multi-line labels.</p>
+<pre class="r"><code>df &lt;- data.frame(
+  x = c(1, 2, 3),
+  y = c(1, 2, 3),
+  label = c(&quot;Compact\nline\nspacing&quot;, &quot;Default\nline\nspacing&quot;, &quot;Spacious\nline\nspacing&quot;)
+)
+
+p1 &lt;- ggplot(df, aes(x, y, label = label)) +
+  geom_point(color = &quot;red&quot;, size = 3) +
+  geom_label_repel(lineheight = 0.8, fill = &quot;lightblue&quot;) +
+  labs(title = &quot;lineheight = 0.8&quot;)
+
+p2 &lt;- ggplot(df, aes(x, y, label = label)) +
+  geom_point(color = &quot;red&quot;, size = 3) +
+  geom_label_repel(lineheight = 1.2, fill = &quot;lightgreen&quot;) +
+  labs(title = &quot;lineheight = 1.2 (default)&quot;)
+
+p3 &lt;- ggplot(df, aes(x, y, label = label)) +
+  geom_point(color = &quot;red&quot;, size = 3) +
+  geom_label_repel(lineheight = 2.0, fill = &quot;lightyellow&quot;) +
+  labs(title = &quot;lineheight = 2.0&quot;)
+
+gridExtra::grid.arrange(p1, p2, p3, ncol = 3)</code></pre>
+<p><img src="examples_files/figure-html/label_lineheight-1.png" alt="" width="700" /></p>
 </div>
 <div id="repel-labels-from-data-points-with-different-sizes"
 class="section level3 tabset">
@@ -789,7 +951,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
     box.padding = 0.3 # additional padding around each text label
   ) +
   theme(legend.position = &quot;right&quot;)</code></pre>
-<p><img src="examples_files/figure-html/point_size_cars-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/point_size_cars-1.png" alt="" width="700" /></p>
 </div>
 <div id="geom_label_repel" class="section level4">
 <h4>geom_label_repel()</h4>
@@ -817,7 +979,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
     guide = guide_legend(override.aes = list(label = &quot;&quot;)) # hide &quot;a&quot; in legend
   ) +
   theme(legend.position = &quot;right&quot;)</code></pre>
-<p><img src="examples_files/figure-html/point_size_cars_label-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/point_size_cars_label-1.png" alt="" width="700" /></p>
 </div>
 </div>
 <div id="limit-labels-to-a-specific-area" class="section level3">
@@ -856,7 +1018,7 @@ p &lt;- ggplot(dat) +
   )
 
 p</code></pre>
-<p><img src="examples_files/figure-html/xlim-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/xlim-1.png" alt="" width="700" /></p>
 </div>
 <div id="remove-a-from-the-legend" class="section level3">
 <h3>Remove “a” from the legend</h3>
@@ -866,7 +1028,7 @@ p</code></pre>
 p + guides(fill = guide_legend(override.aes = aes(color = NA)))</code></pre>
 <pre class="r"><code># Or set the label to the empty string &quot;&quot; (or any other string).
 p + guides(fill = guide_legend(override.aes = aes(label = &quot;&quot;)))</code></pre>
-<p><img src="examples_files/figure-html/remove_a_2-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/remove_a_2-1.png" alt="" width="700" /></p>
 </div>
 <div id="align-labels-on-the-top-or-bottom-edge" class="section level3">
 <h3>Align labels on the top or bottom edge</h3>
@@ -907,7 +1069,7 @@ ggplot(mtcars, aes(x = wt, y = 1, label = rownames(mtcars))) +
     axis.text.y  = element_blank(),
     axis.title.y = element_blank()
   )</code></pre>
-<p><img src="examples_files/figure-html/direction_x-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/direction_x-1.png" alt="" width="700" /></p>
 <p>Align text vertically with <code>nudge_y</code> and allow the labels
 to move horizontally with <code>direction = "x"</code>:</p>
 <pre class="r"><code>set.seed(42)
@@ -926,7 +1088,7 @@ ggplot(dat, aes(qsec, mpg, label = car)) +
   geom_point(color = ifelse(dat$mpg &gt; 30, &quot;red&quot;, &quot;black&quot;)) +
   scale_x_continuous(expand = c(0.05, 0.05)) +
   scale_y_continuous(limits = c(NA, 36))</code></pre>
-<p><img src="examples_files/figure-html/neat-offset-x-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/neat-offset-x-1.png" alt="" width="700" /></p>
 </div>
 <div id="align-labels-on-the-left-or-right-edge" class="section level3">
 <h3>Align labels on the left or right edge</h3>
@@ -979,7 +1141,7 @@ p3 &lt;- p +
   ggtitle(&quot;hjust = 1&quot;)
 
 gridExtra::grid.arrange(p1, p2, p3, ncol = 3)</code></pre>
-<p><img src="examples_files/figure-html/direction_y-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/direction_y-1.png" alt="" width="700" /></p>
 <p>Align text horizontally with <code>nudge_x</code> and
 <code>hjust</code>, and allow the labels to move vertically with
 <code>direction = "y"</code>:</p>
@@ -1010,7 +1172,7 @@ ggplot(dat, aes(wt, mpg, label = car)) +
     limits = c(2.4, 3.8)
   ) +
   geom_point(color = &quot;red&quot;)</code></pre>
-<p><img src="examples_files/figure-html/neat-offset-y-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/neat-offset-y-1.png" alt="" width="700" /></p>
 </div>
 <div id="using-ggrepel-with-stat_summary" class="section level3">
 <h3>Using ggrepel with stat_summary()</h3>
@@ -1034,7 +1196,7 @@ data point.</p>
   )
 
 p1 &lt;- p + stat_summary(
-    aes(label = round(stat(y))), 
+    aes(label = round(after_stat(y))), 
     fun = &quot;mean&quot;,
     geom = &quot;text_repel&quot;,
     min.segment.length = 0, # always draw segments
@@ -1043,7 +1205,7 @@ p1 &lt;- p + stat_summary(
   labs(title = &quot;position_nudge()&quot;)
 
 p2 &lt;- p + stat_summary(
-    aes(label = round(stat(y))), 
+    aes(label = round(after_stat(y))), 
     fun = &quot;mean&quot;,
     geom = &quot;text_repel&quot;,
     min.segment.length = 0, # always draw segments
@@ -1052,7 +1214,7 @@ p2 &lt;- p + stat_summary(
   labs(title = &quot;position_nudge_repel()&quot;)
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
-<p><img src="examples_files/figure-html/stat_summary-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/stat_summary-1.png" alt="" width="700" /></p>
 </div>
 <div id="justify-multiple-lines-of-text-with-hjust"
 class="section level3">
@@ -1080,7 +1242,7 @@ p + geom_text_repel(
   nudge_x       = c(-0.05, 0.05),
   arrow         = arrow(length = unit(2, &quot;mm&quot;), ends = &quot;last&quot;, type = &quot;closed&quot;)
 )</code></pre>
-<p><img src="examples_files/figure-html/geom_text_repel-hjust-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/geom_text_repel-hjust-1.png" alt="" width="700" /></p>
 <pre class="r"><code>p + geom_label_repel(
   data          = labelInfo,
   mapping       = aes(x, y, label = g),
@@ -1089,7 +1251,113 @@ p + geom_text_repel(
   nudge_x       = c(-0.05, 0.05),
   arrow         = arrow(length = unit(2, &quot;mm&quot;), ends = &quot;last&quot;, type = &quot;closed&quot;)
 )</code></pre>
-<p><img src="examples_files/figure-html/geom_text_repel-hjust-2.png" width="700" /></p>
+<p><img src="examples_files/figure-html/geom_text_repel-hjust-2.png" alt="" width="700" /></p>
+</div>
+<div id="marquee-markdown-with-rich-text-styles-and-images"
+class="section level3">
+<h3>marquee: Markdown with rich text styles and images</h3>
+<p>ggrepel now works with the <a
+href="https://github.com/r-lib/marquee/">marquee</a> package!</p>
+<p>See the <a href="https://marquee.r-lib.org/">marquee
+documentation</a> for more information about how to control the
+styles.</p>
+<p>We can use the function <code>geom_marquee_repel()</code> to plot
+rich text and images with automatic positioning, as shown in this
+example below:</p>
+<pre class="r"><code>logo &lt;- &quot;https://cran.r-project.org/Rlogo.svg&quot;
+
+# Note: width values are in &quot;npc&quot; units (proportion of panel width).
+# Use values between 0 and 1 (e.g., 0.3 = 30% of panel width).
+df &lt;- data.frame(
+  x = c(0, 4.9, 5, 5.1, 10),
+  y = c(0, 4.9, 5, 5.1, 10),
+  labels = c(
+    &quot;Some {.blue *italic blue*} text&quot;,
+    &quot;Other {.red **bold red**} text&quot;,
+    &quot;More {.purple ~strikethrough~} text&quot;,
+    &quot;# Title\nBody text&quot;,
+    paste0(&quot;![](&quot;, logo, &quot;)&quot;)
+  ),
+  widths = c(0.3, 0.3, 0.3, 0.3, 0.3) # npc units, so 0.3 = 30% of panel width
+)
+
+# In this knitr chunk, we are using dev=&quot;ragg_png&quot; like so:
+# {r marquee, echo=TRUE, fig.width=6, fig.height=5, dev=&quot;ragg_png&quot;}
+ggplot(df, aes(x, y, label = labels, width = widths)) +
+  geom_marquee_repel(
+    box.padding = unit(5, &quot;mm&quot;), seed = 1
+  ) +
+  labs(title = &#39;dev=&quot;ragg_png&quot;&#39;)</code></pre>
+<p><img src="examples_files/figure-html/marquee-1.png" alt="" width="700" /></p>
+<div class="alert alert-info" role="alert">
+<p><strong>Note:</strong> When using <code>geom_marquee_repel()</code>,
+you may want to use <strong><a
+href="https://ragg.r-lib.org/articles/ragg_quality.html">ragg</a></strong>
+instead of the default renderer. This can improve the display of your
+plot.</p>
+</div>
+<p>If we use <code>geom_marquee_repel()</code> with
+<code>dev="png"</code> instead of <code>dev="ragg_png"</code>, then the
+result is more pixelated:</p>
+<pre class="r"><code># In this knitr chunk, we are using dev=&quot;png&quot; like so:
+# {r marquee-pixelated, echo=TRUE, fig.width=6, fig.height=5, dev=&quot;png&quot;}
+ggplot(df, aes(x, y, label = labels, width = widths)) +
+  geom_marquee_repel(
+    box.padding = unit(5, &quot;mm&quot;), seed = 1
+  ) +
+  labs(title = &#39;dev=&quot;png&quot;&#39;)</code></pre>
+<p><img src="examples_files/figure-html/marquee-pixelated-1.png" alt="" width="700" /></p>
+<p>To learn more, see the <a
+href="https://ragg.r-lib.org/articles/ragg_quality.html">ragg</a>
+documentation and read about the <code>device</code> argument for the
+<code>ggplot2::ggsave()</code> function.</p>
+</div>
+<div id="repel-axis-labels-with-element_text_repel"
+class="section level3">
+<h3>Repel axis labels with element_text_repel()</h3>
+<p>Use <code>element_text_repel()</code> as a theme element to repel
+crowded axis labels. This is especially useful when you have many
+categories on a categorical axis.</p>
+<pre class="r"><code># A plot with many overlapping y-axis labels
+p &lt;- ggplot(mtcars, aes(mpg, rownames(mtcars))) +
+  geom_col(fill = &quot;steelblue&quot;)
+
+# Expand the y-axis limits to make room for repelled labels
+p + coord_cartesian(ylim = c(-32, 64)) +
+  theme(axis.text.y.left = element_text_repel(margin = margin(r = 20)))</code></pre>
+<p><img src="examples_files/figure-html/element_text_repel_basic-1.png" alt="" width="700" /></p>
+<p>You can customize the connecting segments with curvature and color
+options:</p>
+<pre class="r"><code>p + coord_cartesian(ylim = c(-32, 64)) +
+  theme(
+    axis.text.y.left = element_text_repel(
+      margin = margin(r = 20),
+      segment.curvature = -0.1,
+      segment.inflect = TRUE,
+      segment.colour = &quot;red&quot;
+    ),
+    axis.ticks.y.left = element_line(colour = &quot;red&quot;)
+  )</code></pre>
+<p><img src="examples_files/figure-html/element_text_repel_curved-1.png" alt="" width="700" /></p>
+<p>For secondary axes (top and right), use the <code>position</code>
+argument:</p>
+<pre class="r"><code>x &lt;- c(0, 4.9, 5, 5.1, 10)
+labels &lt;- c(&quot;Lorem ipsum&quot;, &quot;dolor amet&quot;, &quot;consectetur&quot;, &quot;adipiscing&quot;, &quot;elit&quot;)
+
+ggplot(mapping = aes(x, x, colour = x)) +
+  geom_point(size = 3) +
+  scale_x_continuous(breaks = x, labels = labels) +
+  scale_y_continuous(breaks = x, labels = labels) +
+  scale_colour_viridis_c(breaks = x, labels = labels) +
+  guides(x.sec = &quot;axis&quot;, y.sec = &quot;axis&quot;) +
+  theme(
+    axis.text.x.bottom = element_text_repel(angle = 90, margin = margin(t = 70)),
+    axis.text.y.left   = element_text_repel(margin = margin(r = 10)),
+    axis.text.x.top    = element_text_repel(angle = 90,margin = margin(b = 70), position = &quot;top&quot;),
+    axis.text.y.right  = element_text_repel(margin = margin(l = 10), position = &quot;right&quot;),
+    legend.text        = element_text_repel(margin = margin(l = 10), position = &quot;right&quot;)
+  )</code></pre>
+<p><img src="examples_files/figure-html/element_text_repel_secondary-1.png" alt="" width="700" /></p>
 </div>
 <div id="label-jittered-points" class="section level3">
 <h3>Label jittered points</h3>
@@ -1104,7 +1372,7 @@ ggplot(mtcars, aes(factor(cyl), mpg, color = label != &quot;&quot;, label = labe
   geom_text_repel(position = pos) +
   theme(legend.position = &quot;none&quot;) +
   labs(title = &quot;position_jitter()&quot;)</code></pre>
-<p><img src="examples_files/figure-html/jitter-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/jitter-1.png" alt="" width="700" /></p>
 <p>You can also use other position functions, like
 <code>position_quasirandom()</code> from the <a
 href="https://github.com/eclarke/ggbeeswarm">ggbeeswarm</a> package by
@@ -1120,7 +1388,7 @@ ggplot(mtcars, aes(factor(cyl), mpg, color = label != &quot;&quot;, label = labe
   geom_text_repel(position = pos) +
   theme(legend.position = &quot;none&quot;) +
   labs(title = &quot;position_quasirandom()&quot;)</code></pre>
-<p><img src="examples_files/figure-html/quasirandom-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/quasirandom-1.png" alt="" width="700" /></p>
 </div>
 <div id="nudge-labels-in-different-directions-with-ggpp"
 class="section level3">
@@ -1151,7 +1419,7 @@ p &lt;- ggplot(df, aes(x = PC1, y = PC2, label = Species)) +
 p1 &lt;- p + geom_text_repel()
 p2 &lt;- p + geom_text_repel(position = position_nudge_center(0.2, 0.1, 0, 0))
 p1 + (p2 + labs(title = &quot;position_nudge_center()&quot;))</code></pre>
-<p><img src="examples_files/figure-html/position_nudge_center-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/position_nudge_center-1.png" alt="" width="700" /></p>
 </div>
 <div id="label-sf-objects" class="section level3">
 <h3>Label <code>sf</code> objects</h3>
@@ -1180,7 +1448,7 @@ ggplot(nc) +
     stat = &quot;sf_coordinates&quot;,
     min.segment.length = 0
   )</code></pre>
-<p><img src="examples_files/figure-html/label-sf-objects-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/label-sf-objects-1.png" alt="" width="700" /></p>
 <p>Thanks to <a
 href="https://github.com/slowkow/ggrepel/issues/111#issuecomment-416853013">Hiroaki
 Yutani</a> for the solution.</p>
@@ -1201,10 +1469,18 @@ ggplot(dat, aes(wt, mpg, label = car)) +
     bg.color = &quot;grey30&quot;, # shadow color
     bg.r = 0.15          # shadow radius
   )</code></pre>
-<p><img src="examples_files/figure-html/shadowtext-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/shadowtext-1.png" alt="" width="700" /></p>
 </div>
 <div id="verbose-timing-information" class="section level3">
 <h3>Verbose timing information</h3>
+<p>By default, ggrepel will respect the global <code>verbose</code>
+option, so please check <code>getOption("verbose")</code> to see if this
+is set to TRUE or FALSE in your environment. We can set the global
+option with <code>options(verbose = TRUE)</code> or
+<code>options(verbose = FALSE)</code>.</p>
+<p>We can override the global value by using
+<code>geom_text_repel(verbose = TRUE)</code> or
+<code>geom_text_repel(verbose = FALSE)</code>.</p>
 <p>Use <code>verbose = TRUE</code> to see:</p>
 <ul>
 <li>how many iterations of the physical simulation were completed</li>
@@ -1218,12 +1494,12 @@ ggplot(dat, aes(wt, mpg, label = car)) +
 p + geom_text_repel(
   verbose = TRUE,
   seed = 123,
-  max.time = 1,
+  max.time = 0.1,
   max.iter = Inf,
   size = 3
 )</code></pre>
-<p><img src="examples_files/figure-html/timing-1.png" width="700" /></p>
-<pre><code>## 1.00s elapsed for 154530 iterations, 2 overlaps. Consider increasing &#39;max.time&#39;.</code></pre>
+<pre><code>## ggrepel: 0.100000s elapsed for 1140 iterations, 41 overlaps. Consider increasing &#39;max.time&#39;.</code></pre>
+<p><img src="examples_files/figure-html/timing-1.png" alt="" width="700" /></p>
 </div>
 <div id="word-cloud" class="section level3">
 <h3>Word cloud</h3>
@@ -1265,7 +1541,7 @@ ggplot(mtcars) +
     strip.text   = element_blank(),
     panel.border = element_rect(size = 0.2, fill = NA)
   )</code></pre>
-<p><img src="examples_files/figure-html/wordcloud-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/wordcloud-1.png" alt="" width="700" /></p>
 </div>
 <div id="polar-coordinates" class="section level3">
 <h3>Polar coordinates</h3>
@@ -1280,7 +1556,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl), label = label)) +
   scale_color_discrete(name = &quot;cyl&quot;) +
   geom_text_repel(show.legend = FALSE) + # Don&#39;t display &quot;a&quot; in the legend.
   theme_bw(base_size = 18)</code></pre>
-<p><img src="examples_files/figure-html/polar-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/polar-1.png" alt="" width="700" /></p>
 </div>
 <div id="modified-coordinates" class="section level3">
 <h3>Modified coordinates</h3>
@@ -1290,13 +1566,13 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl), label = label)) +
   geom_point(color = &#39;red&#39;)</code></pre>
 <pre class="r"><code># Swap the x and y coordinates
 p + coord_flip()</code></pre>
-<p><img src="examples_files/figure-html/coord_flip-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/coord_flip-1.png" alt="" width="700" /></p>
 <pre class="r"><code># Limit the x-axis to values &lt;= 3
 p + scale_x_continuous(limits = c(NA, 3))</code></pre>
-<p><img src="examples_files/figure-html/x_limits_na-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/x_limits_na-1.png" alt="" width="700" /></p>
 <pre class="r"><code># Transform the y-axis with a pseudo log transformation
 p + coord_trans(y = scales::pseudo_log_trans(base = 2, sigma = 0.1))</code></pre>
-<p><img src="examples_files/figure-html/pseudo_log_trans-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/pseudo_log_trans-1.png" alt="" width="700" /></p>
 </div>
 <div id="unicode-characters-japanese" class="section level3">
 <h3>Unicode characters (Japanese)</h3>
@@ -1320,7 +1596,7 @@ ggplot(dat, aes(x, y, label = label)) +
   geom_text_repel(size = 8, family = my_font) +
   ggtitle(&quot;テスト&quot;) +
   theme_bw(base_size = 18, base_family = my_font)</code></pre>
-<p><img src="examples_files/figure-html/japanese-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/japanese-1.png" alt="" width="700" /></p>
 </div>
 <div id="mathematical-expressions" class="section level3">
 <h3>Mathematical expressions</h3>
@@ -1343,7 +1619,7 @@ ggplot(d, aes(x, y, label = math)) +
     size        = 6,
     box.padding = 2
   )</code></pre>
-<p><img src="examples_files/figure-html/math-1.png" width="700" /></p>
+<p><img src="examples_files/figure-html/math-1.png" alt="" width="700" /></p>
 </div>
 <div id="animation" class="section level3">
 <h3>Animation</h3>
@@ -1377,7 +1653,8 @@ saveGIF(
   ani.heigth = 600,
   movie.name = &quot;animated.gif&quot;
 )</code></pre>
-<p><img src="https://imgur.com/ii9ova8.gif" /></p>
+<video src="https://slowkow.com/ggrepel/index_files/animation.mp4" style="width:100%;" type="video/mp4" muted autoplay loop>
+</video>
 </div>
 </div>
 <div id="source-code" class="section level2">
@@ -1389,36 +1666,47 @@ code for this vignette</a> on GitHub.</p>
 <div id="r-session-info" class="section level2">
 <h2>R Session Info</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.2.3 (2023-03-15)
-## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Ventura 13.4
+<pre><code>## R version 4.5.2 (2025-10-31)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Sequoia 15.6.1
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRlapack.dylib
+## BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/New_York
+## tzcode source: internal
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] sf_1.0-12        patchwork_1.2.0  ggpp_0.5.5       ggbeeswarm_0.7.2 ggrepel_0.9.6   
-## [6] ggplot2_3.5.1    gridExtra_2.3    knitr_1.47      
+## [1] sf_1.0-23          patchwork_1.3.2    ggpp_0.5.9         ggbeeswarm_0.7.3  
+## [5] gridExtra_2.3      knitr_1.51         ggrepel_0.9.6.9999 testthat_3.3.1    
+## [9] ggplot2_4.0.1     
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] beeswarm_0.4.0     tidyselect_1.2.1   xfun_0.44          bslib_0.7.0        colorspace_2.1-0  
-##  [6] vctrs_0.6.5        generics_0.1.3     htmltools_0.5.8.1  yaml_2.3.8         utf8_1.2.4        
-## [11] rlang_1.1.3        e1071_1.7-13       jquerylib_0.1.4    pillar_1.9.0       glue_1.7.0        
-## [16] withr_3.0.0        DBI_1.2.3          lifecycle_1.0.4    munsell_0.5.0      gtable_0.3.4      
-## [21] codetools_0.2-19   evaluate_0.23      labeling_0.4.3     fastmap_1.2.0      vipor_0.4.5       
-## [26] class_7.3-21       fansi_1.0.6        highr_0.11         Rcpp_1.0.11        KernSmooth_2.23-20
-## [31] polynom_1.4-1      scales_1.3.0.9000  classInt_0.4-9     cachem_1.1.0       jsonlite_1.8.8    
-## [36] farver_2.1.1       digest_0.6.35      dplyr_1.1.4        grid_4.2.3         cli_3.6.2         
-## [41] tools_4.2.3        magrittr_2.0.3     sass_0.4.9         proxy_0.4-27       tibble_3.2.1      
-## [46] pkgconfig_2.0.3    MASS_7.3-58.2      timechange_0.2.0   lubridate_1.9.3    rmarkdown_2.27    
-## [51] R6_2.5.1           units_0.8-2        compiler_4.2.3</code></pre>
+##  [1] gtable_0.3.6       beeswarm_0.4.0     xfun_0.55          bslib_0.9.0       
+##  [5] devtools_2.4.6     remotes_2.5.0.9000 vctrs_0.6.5        tools_4.5.2       
+##  [9] generics_0.1.4     proxy_0.4-27       tibble_3.3.0       pkgconfig_2.0.3   
+## [13] KernSmooth_2.23-26 RColorBrewer_1.1-3 S7_0.2.1           desc_1.4.3        
+## [17] lifecycle_1.0.4    compiler_4.5.2     farver_2.1.2       textshaping_1.0.4 
+## [21] brio_1.1.5         codetools_0.2-20   vipor_0.4.7        class_7.3-23      
+## [25] htmltools_0.5.9    usethis_3.2.1      sass_0.4.10        yaml_2.3.12       
+## [29] pillar_1.11.1      jquerylib_0.1.4    MASS_7.3-65        ellipsis_0.3.2    
+## [33] classInt_0.4-11    cachem_1.1.0       sessioninfo_1.2.3  tidyselect_1.2.1  
+## [37] digest_0.6.39      stringi_1.8.7      dplyr_1.1.4        purrr_1.2.0       
+## [41] labeling_0.4.3     rsvg_2.7.0         rprojroot_2.1.1    fastmap_1.2.0     
+## [45] grid_4.5.2         marquee_1.2.1      cli_3.6.5          magrittr_2.0.4    
+## [49] pkgbuild_1.4.8     e1071_1.7-16       withr_3.0.2        scales_1.4.0      
+## [53] timechange_0.3.0   lubridate_1.9.4    rmarkdown_2.30     otel_0.2.0        
+## [57] ragg_1.5.0         memoise_2.0.1      evaluate_1.0.5     viridisLite_0.4.2 
+## [61] rlang_1.1.6        Rcpp_1.1.0         DBI_1.2.3          glue_1.8.0        
+## [65] polynom_1.4-1      pkgload_1.4.1      rstudioapi_0.17.1  jsonlite_2.0.0    
+## [69] R6_2.6.1           units_1.0-0        systemfonts_1.3.1  fs_1.6.6</code></pre>
 </div>
 
 

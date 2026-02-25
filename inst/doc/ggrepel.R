@@ -66,10 +66,10 @@ p2 <- p + geom_text_repel() + labs(title = "geom_text_repel()")
 gridExtra::grid.arrange(p1, p2, ncol = 2)
 
 ## ----install-cran, echo=TRUE, eval=FALSE--------------------------------------
-#  install.packages("ggrepel")
+# install.packages("ggrepel")
 
 ## ----install-github, echo=TRUE, eval=FALSE------------------------------------
-#  # Use the devtools package
-#  # install.packages("devtools")
-#  devtools::install_github("slowkow/ggrepel")
+# # Use the devtools package
+# # install.packages("devtools")
+# devtools::install_github("slowkow/ggrepel")
 
