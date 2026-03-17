@@ -1,7 +1,7 @@
-7aab4ad8d9d504bf274da3aff50f5b71 *DESCRIPTION
+a1079a1a3b2c7ac0398c9f5d5521bc71 *DESCRIPTION
 84dcc94da3adb52b53ae4fa38fe49e5d *LICENSE
 993550dbadcc2818df0a7078b50964df *NAMESPACE
-e0d0b81e73e994e886b664bfec491ef4 *NEWS.md
+61ecab9854b66866dfbde678f8809012 *NEWS.md
 fcf0c76ef5d493595a631e474ad39f31 *R/RcppExports.R
 4fa2a181561d78d0a08265d254f1ed8f *R/element-text-repel.R
 f3a0b4bfe7e05737e1f78d4d99058413 *R/geom-label-repel.R
@@ -14,7 +14,7 @@ c92726457c562a0e5d45597d683e83c3 *README.md
 0d1907089040382905196e57d0825f6d *build/vignette.rds
 32b44f358bb8c300626db71f84953b81 *inst/doc/ggrepel.R
 3973a0d3ae7bcbea90321ec228ab198c *inst/doc/ggrepel.Rmd
-0dde5e1c09d468acc982380140a16fa2 *inst/doc/ggrepel.html
+f1f392400d1e463d3a150a94eaabd553 *inst/doc/ggrepel.html
 d385ecbd907ce6dde6c1f86b3dd101af *man/element_text_repel.Rd
 494d18435e71ba56c7e9c752c4757b4d *man/figures/logo.svg
 9b07bcf164b624049eba5519c3b74274 *man/geom_text_repel.Rd
@@ -30,6 +30,5 @@ f50a29bfc63c5b10b58826b32c5f963f *tests/testthat/test-grob-order.R
 8d2244b50718065a97f64406bd273cf7 *tests/testthat/test-lots-of-points.R
 943e6dbe94ff39e19d541cd016cba491 *tests/testthat/test-seed.R
 ed936201406afdf470ab331a291eb437 *tests/testthat/test-to_unit.R
-93666814abdd955055ec2369c296251b *vignettes/examples.html
 3973a0d3ae7bcbea90321ec228ab198c *vignettes/ggrepel.Rmd
 3970140f78dfebacbbc70d8dbf3946cf *vignettes/style.css
